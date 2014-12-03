@@ -49,8 +49,8 @@ var index = 0;
 var texture;
 
 // view matrix
-var eye = vec3(0, 1, 2);
-var at = vec3(0, 0, 0);
+var eye = vec3(0, 1, 0.001);
+var at = vec3(0, 0, -100);
 var up = vec3(0, 1, 0);
 
 window.onload = function init() {
@@ -82,11 +82,13 @@ window.onload = function init() {
 		else if( e.keyCode===40) { // "down" (move camera down)
 			y+=0.1;
 		}
-		else if(e.keyCode===37) { // "left" (turn left - not yet implemented)
-			textureDegree+=1;
+		else if(e.keyCode===37) { // "left" (turn left)
+			if(textureDegree>-15)
+				textureDegree-=0.5;
 		}
-		else if(e.keyCode===39) { // "right" (turn right - not yet implemented)
-			textureDegree-=1;
+		else if(e.keyCode===39) { // "right" (turn right)
+			if(textureDegree<15)
+				textureDegree+=0.5;
 		}
 		else if(e.keyCode===73) { // "i" (speed up)
 			textureScrollSpeed+=0.0005;
@@ -100,7 +102,6 @@ window.onload = function init() {
 			y=0;
 			z=0;
 		}
-		console.log(e.keyCode);
 	};
 	
 	// set up world, specifying the viewport, enabling depth buffer, and clearing color buffer
@@ -211,8 +212,16 @@ function render() {
     gl.uniform1f(uniform_shininess,  shininess);
 	
 // slope
+    
+    // scrolling of texture
+    // apply relative translational positioning to uvArray (x and y components are additively increased by those values on each render)
+    var translateX = textureScrollSpeed*Math.cos(toRadians(textureDegree));
+    var translateY = -textureScrollSpeed*Math.sin(toRadians(textureDegree));
+    translateUV(uvArray, translateX, translateY);
+	// apply transformation via binding
+	gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, flatten(uvArray), gl.STATIC_DRAW);
 
-    /*
     // rotation of texture
 	// make a copy of uvArray
 	var uvArrayTemp = uvArray.slice();
@@ -222,15 +231,7 @@ function render() {
 	// apply transformation via binding
 	gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, flatten(uvArrayTemp), gl.STATIC_DRAW);
-    */
-    
-    // scrolling of texture
-    // apply relative translational positioning to uvArray (x and y components are additively increased by those values on each render)
-	translateUV(uvArray, textureScrollSpeed, 0);
-	// apply transformation via binding
-	gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, flatten(uvArray), gl.STATIC_DRAW);
-    
+
 	// bind the normal texture coordinates
     gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
     gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);
@@ -312,4 +313,8 @@ function translateUV(matrix, distanceX, distanceY) {
 		// make changes to the matrix
 		matrix[i] = [newX, newY];
 	}
+}
+
+function toRadians(theta) {
+	return theta*Math.PI/180;
 }
