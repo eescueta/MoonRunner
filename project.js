@@ -9,6 +9,7 @@ window.onload = init;
 function init() {
 
 	// reset variables
+	score = 0;
 	life = 3;
 	textureDegree = 0;
 	textureScrollSpeed = 0.005;
