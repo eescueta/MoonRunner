@@ -1,8 +1,12 @@
 <html>
+<link rel="stylesheet" type="text/css" href="style.css" />
 
 <script type="text/javascript" src="./Common/webgl-utils.js"></script>
 <script type="text/javascript" src="./Common/initShaders.js"></script>
 <script type="text/javascript" src="./Common/math.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type="text/javascript" src="global.js"></script>
+<script type="text/javascript" src="shape.js"></script>
 <script type="text/javascript" src="project.js"></script>
 
 <script id="vertex-shader" type="x-shader/x-vertex">
@@ -76,11 +80,16 @@ void main() {
 </script>
 
 <body>
+<div class="interface">
 <canvas id="gl-canvas" width="1024" height="768">
 Oops ... your browser doesn't support the HTML5 canvas element
 </canvas>
 
-<div>
+	<h3 class="label">Score: <span id="score">0</span></h3>
+
+	 <!-- <div id="hitbox">test</div> -->
+	<br />
+
 	Controls:   
 	<ul>
 		<li>i: speed up</li>

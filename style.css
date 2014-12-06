@@ -1,0 +1,28 @@
+#canvas-wrap {
+		position:relative 
+} /* Make this a positioned parent */
+
+.interface {
+}
+
+.label { 
+	position:absolute;
+	padding-left: 850px;
+	padding-bottom: 25px;
+	font-family: "Helvetica";
+	color: #FFF;
+	top:20px;
+	left:30px;
+	float: right;
+	-webkit-user-select: none; /* Chrome/Safari */        
+	-moz-user-select: none; /* Firefox */
+	-ms-user-select: none; /* IE10+ */
+}
+
+#hitbox {
+	position: absolute;
+	width: 1024px;
+	padding-bottom: 1024px;
+	height: 768px;
+	background-color: #ff0000;
+}

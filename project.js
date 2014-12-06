@@ -7,9 +7,16 @@
 // global components
 var canvas;
 var gl;
+var program;
 var length = 0.5;
 var time = 0.0;
 var timer = new Timer();
+
+var life = 3;
+var score = 0;
+
+// audio
+var smash = new Audio("./Sounds/smash.wav"); 
 
 // navigation system variables
 var x = 0; // x-axis displacement from origin (controls right/left)
@@ -17,6 +24,10 @@ var y = 0; // y-axis displacement from origin (controls up/down)
 var z = 0; // z-axis displacement from origin (controls back/forward)
 var textureDegree = 0;
 var textureScrollSpeed = 0.005;
+
+var scrollX = 0;
+var scrollY = 0;
+var scrollZ = 0;
 
 // buffers for vertices and normals
 var positionBuffer;
@@ -28,6 +39,7 @@ var uniform_mvpMatrix;
 var viewMatrix;
 var projectionMatrix;
 var mvpMatrix;
+var orthoProjectionMatrix;
 
 // light position and attribute data
 var attribute_position;
@@ -44,6 +56,32 @@ var pointsArray = [];
 var normalsArray = [];
 var uvArray = [];
 var index = 0;
+
+//cube stuff
+var vertices = [
+        vec3(  length,   length, length ), //vertex 0
+        vec3(  length,  -length, length ), //vertex 1
+        vec3( -length,   length, length ), //vertex 2
+        vec3( -length,  -length, length ),  //vertex 3 
+        vec3(  length,   length, -length ), //vertex 4
+        vec3(  length,  -length, -length ), //vertex 5
+        vec3( -length,   length, -length ), //vertex 6
+        vec3( -length,  -length, -length )  //vertex 7   
+    ];
+
+var positionX = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]    
+var positionZ = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]    
+
+var cubePoints = [];
+var cubeNormals = [];
+var cubeUv = [];
+
+// Heart position
+var heartPositions = [
+	vec3(-4.5, 4.5, 0), 
+    vec3(-3.5, 4.5, 0), 
+    vec3(-2.5, 4.5, 0)
+];
 
 // texture
 var texture;
@@ -78,17 +116,25 @@ window.onload = function init() {
 		}
 		else if(e.keyCode===38) { // "up" (move camera up)
 			y-=0.1;
+			scrollZ += 0.1;
 		}
 		else if( e.keyCode===40) { // "down" (move camera down)
 			y+=0.1;
+			scrollZ -= 0.1;
 		}
 		else if(e.keyCode===37) { // "left" (turn left)
-			if(textureDegree>-15)
+			console.log(positionZ);
+			if(textureDegree>-15) {
 				textureDegree-=0.5;
+				scrollX += 0.1;
+			}
 		}
 		else if(e.keyCode===39) { // "right" (turn right)
-			if(textureDegree<15)
+			console.log(positionZ);
+			if(textureDegree<15) {
 				textureDegree+=0.5;
+				scrollX -= 0.1;
+			}
 		}
 		else if(e.keyCode===73) { // "i" (speed up)
 			textureScrollSpeed+=0.0005;
@@ -110,7 +156,7 @@ window.onload = function init() {
     gl.enable(gl.DEPTH_TEST);
 	
 	// use program with shaders
-	var program = initShaders( gl, "vertex-shader", "fragment-shader" );
+	program = initShaders( gl, "vertex-shader", "fragment-shader" );
     gl.useProgram( program );
 
 	// loading a texture image into buffer for texture mapping
@@ -128,6 +174,32 @@ window.onload = function init() {
     }
 	texture.image.src = "./Images/snow.jpg";
 
+	texture2 = gl.createTexture();
+    texture2.image = new Image();
+    texture2.image.onload = function(){
+		gl.bindTexture(gl.TEXTURE_2D, texture2); // bind texture as current texture to use
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture2.image); // upload texture image to GPU
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); // parameters for scaling up
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // parameters for scaling down
+		// gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); // prevent wrapped s coordinates (repeating)
+		// gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); // prevent wrapped t coordinates
+		gl.bindTexture(gl.TEXTURE_2D, null);
+    }
+	texture2.image.src = "./Images/brick.jpg";
+
+	heartTexture = gl.createTexture();
+    heartTexture.image = new Image();
+    heartTexture.image.onload = function(){
+		gl.bindTexture(gl.TEXTURE_2D, heartTexture); // bind texture as current texture to use
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, heartTexture.image); // upload texture image to GPU
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); // parameters for scaling up
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // parameters for scaling down
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); // prevent wrapped s coordinates (repeating)
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); // prevent wrapped t coordinates
+		gl.bindTexture(gl.TEXTURE_2D, null);
+    }
+	heartTexture.image.src = "./Images/heart.jpg";
+
 	slopeVertices = [
 		vec3(length, 0, length),
 		vec3(length, 0, -length),
@@ -137,6 +209,22 @@ window.onload = function init() {
 	
 	// generate slope arrays
     slope(slopeVertices, pointsArray, normalsArray, uvArray);	
+
+    // generate blocks
+    Cube(vertices, cubePoints, cubeNormals, cubeUv);
+
+    for (var i = 0; i < 10; i++)
+    {
+    	positionX[i] = Math.floor(Math.random()*4) + 0;
+    	positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
+    	positionZ[i] = Math.floor(Math.random()*10) + 6;
+    	positionZ[i] *= -1;
+    }
+    positionX[0] = 0;
+    positionZ[0] = -7;
+
+
+    /*
     
 	// bind and set up position buffer
     positionBuffer = gl.createBuffer();
@@ -152,6 +240,8 @@ window.onload = function init() {
 	uvBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(uvArray), gl.STATIC_DRAW);
+
+    */
 	
 // enable bound shader position/normal attributes
 	
@@ -164,6 +254,8 @@ window.onload = function init() {
 	attribute_UV = gl.getAttribLocation(program, "vTextureCoordinates");
     gl.enableVertexAttribArray(attribute_UV);
 
+    /*
+
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.vertexAttribPointer(attribute_position, 3, gl.FLOAT, false, 0, 0);
 
@@ -172,6 +264,8 @@ window.onload = function init() {
 
     gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
     gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
+
+    */
 	
 	// set variables for all the other uniform variables in shader
     uniform_mvMatrix = gl.getUniformLocation(program, "mvMatrix");
@@ -196,11 +290,52 @@ window.onload = function init() {
     render();
 }
 
+function Cube(vertices, points, normals, uv){
+    Quad(vertices, points, normals, uv, 0, 1, 2, 3, vec3(0, 0, 1));
+    Quad(vertices, points, normals, uv, 4, 0, 6, 2, vec3(0, 1, 0));
+    Quad(vertices, points, normals, uv, 4, 5, 0, 1, vec3(1, 0, 0));
+    Quad(vertices, points, normals, uv, 2, 3, 6, 7, vec3(1, 0, 1));
+    Quad(vertices, points, normals, uv, 6, 7, 4, 5, vec3(0, 1, 1));
+    Quad(vertices, points, normals, uv, 1, 5, 3, 7, vec3(1, 1, 0 ));
+}
+
+function Quad( vertices, points, normals, uv, v1, v2, v3, v4, normal){
+
+    normals.push(normal);
+    normals.push(normal);
+    normals.push(normal);
+    normals.push(normal);
+    normals.push(normal);
+    normals.push(normal);
+
+    uv.push(vec2(0,0));
+    uv.push(vec2(1,0));
+    uv.push(vec2(1,1));
+    uv.push(vec2(0,0));
+    uv.push(vec2(1,1));
+    uv.push(vec2(0,1));
+
+    points.push(vertices[v1]);
+    points.push(vertices[v3]);
+    points.push(vertices[v4]);
+    points.push(vertices[v1]);
+    points.push(vertices[v4]);
+    points.push(vertices[v2]);
+}
+
+
 function render() {
 		
 	// clear buffers and update time based on timer
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     time += timer.getElapsedTime() / 1000;
+    // scrollZ += 0.01;
+    if (life > 0)
+    {
+    	score += 1;
+    }
+
+    $('#score').html(score);
 	
 	viewMatrix = lookAt(eye, at, up);
 
@@ -210,8 +345,29 @@ function render() {
 	// set light position
 	gl.uniform3fv(uniform_lightPosition,  flatten(lightPosition));
     gl.uniform1f(uniform_shininess,  shininess);
+
 	
 // slope
+
+
+	positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(pointsArray), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.vertexAttribPointer(attribute_position, 3, gl.FLOAT, false, 0, 0);
+
+    normalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(normalsArray), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    gl.vertexAttribPointer(attribute_normal, 3, gl.FLOAT, false, 0, 0);	
+
+    uvBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(uvArray), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+    gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
+
     
     // scrolling of texture
     // apply relative translational positioning to uvArray (x and y components are additively increased by those values on each render)
@@ -249,7 +405,104 @@ function render() {
     gl.uniform1i(uniform_sampler, 0)
 
 	gl.drawArrays(gl.TRIANGLES, 0, 6);
-	
+
+
+
+	//Blocks
+
+	positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubePoints), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    attribute_position = gl.getAttribLocation(program, "vPosition");
+    gl.enableVertexAttribArray(attribute_position);
+    gl.vertexAttribPointer(attribute_position, 3, gl.FLOAT, false, 0, 0);
+
+    normalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeNormals), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    attribute_normal = gl.getAttribLocation(program, "vNormal");
+    gl.enableVertexAttribArray(attribute_normal);
+    gl.vertexAttribPointer(attribute_normal, 3, gl.FLOAT, false, 0, 0);	
+
+    uvBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeUv), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+    attribute_UV = gl.getAttribLocation(program, "vTextureCoordinates");
+    gl.enableVertexAttribArray(attribute_UV);
+    gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
+
+
+	for(var i = 0; i < 10; i++)
+	{
+		positionZ[i] += 0.01;
+		mvMatrix = viewMatrix;
+		mvMatrix = mult(mvMatrix, translate(vec3(x,y,z)));
+		mvMatrix = mult(mvMatrix, translate(vec3(positionX[i] + scrollX, 1, positionZ[i])));
+		if (-0.15 < (positionX[i] + scrollX) && (positionX[i] + scrollX) < 0.15)
+		{
+			if (-0.005 < (positionZ[i]) && (positionZ[i]) < 0.005)
+			{
+				life--;
+				smash.play();
+			}
+		} 
+		mvMatrix = mult(mvMatrix, scale(vec3(0.25, 0.5, 0.05)));
+   		gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
+
+   		gl.activeTexture(gl.TEXTURE0);
+	    gl.bindTexture(gl.TEXTURE_2D, texture2);
+	    gl.uniform1i(uniform_sampler, 0)
+
+	    if (positionZ[i] > -5) {
+			gl.drawArrays(gl.TRIANGLES, 0, 36);
+		}
+	}
+
+
+
+
+    // Life HUD
+	positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubePoints), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    attribute_position = gl.getAttribLocation(program, "vPosition");
+    gl.enableVertexAttribArray(attribute_position);
+    gl.vertexAttribPointer(attribute_position, 3, gl.FLOAT, false, 0, 0);
+
+    normalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeNormals), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    attribute_normal = gl.getAttribLocation(program, "vNormal");
+    gl.enableVertexAttribArray(attribute_normal);
+    gl.vertexAttribPointer(attribute_normal, 3, gl.FLOAT, false, 0, 0);	
+
+    uvBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeUv), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+    attribute_UV = gl.getAttribLocation(program, "vTextureCoordinates");
+    gl.enableVertexAttribArray(attribute_UV);
+    gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, heartTexture);
+    gl.uniform1i(uniform_sampler, 0)
+
+    for (var i = 0; i < life; i++) {
+	    orthoProjectionMatrix = ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+	    mvMatrix = orthoProjectionMatrix;
+	    mvMatrix = mult(mvMatrix, scale(vec3(0.1, 0.1, 1)));
+	    // mvMatrix = mult(mvMatrix, translate(vec3(-4.5, 4.5, 0)));
+	    mvMatrix = mult(mvMatrix, translate(heartPositions[i]));
+	    gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
+    	gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+
     window.requestAnimFrame(render);
 }
 
