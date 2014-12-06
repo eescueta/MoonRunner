@@ -380,7 +380,7 @@ function render() {
 		
 		if (-0.15 < (positionX[i] + scrollX) && (positionX[i] + scrollX) < 0.15)
 		{
-			if (-0.005 < (positionZ[i]) && (positionZ[i]) < 0.005)
+			if (-0.005 < (positionZ[i]) && (positionZ[i]) < 0.005+textureScrollSpeed)
 			{
 				life--;
 				smash.play();
