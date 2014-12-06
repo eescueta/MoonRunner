@@ -63,12 +63,21 @@ var vertices = [
         vec3( -length,  -length, -length )  //vertex 7   
     ];
 
-var positionX = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]    
-var positionZ = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]    
-
 var cubePoints = [];
 var cubeNormals = [];
 var cubeUv = [];
+
+var positionX = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]    
+var positionZ = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]    
+
+//sphere data
+var sphereIndex = 0;
+var va = vec4(0.0, 0.0, -1.0,1);
+var vb = vec4(0.0, 0.942809, 0.333333, 1);
+var vc = vec4(-0.816497, -0.471405, 0.333333, 1);
+var vd = vec4(0.816497, -0.471405, 0.333333,1);
+var spherePoints = [];
+var sphereNormals = [];
 
 // Heart position
 var heartPositions = [

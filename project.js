@@ -23,8 +23,8 @@ window.onload = function init() {
 	program = initShaders( gl, "vertex-shader", "fragment-shader" );
     gl.useProgram( program );
 
-	// loading a texture image into buffer for texture mapping
-	// set up texture image using nearest neighbor filtering
+
+    // Slope Texture
 	texture = gl.createTexture();
     texture.image = new Image();
     texture.image.onload = function(){
@@ -36,17 +36,46 @@ window.onload = function init() {
     }
 	texture.image.src = "./Images/snow.jpg";
 
-	texture2 = gl.createTexture();
-    texture2.image = new Image();
-    texture2.image.onload = function(){
-		gl.bindTexture(gl.TEXTURE_2D, texture2); // bind texture as current texture to use
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture2.image); // upload texture image to GPU
+    // Space Texture
+	spaceTexture = gl.createTexture();
+	spaceTexture.image = new Image();
+	spaceTexture.image.onload = function(){
+		gl.bindTexture(gl.TEXTURE_2D, spaceTexture); // bind texture as current texture to use
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, spaceTexture.image); // upload texture image to GPU
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); // parameters for scaling up
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // parameters for scaling down
 		gl.bindTexture(gl.TEXTURE_2D, null);
     }
-	texture2.image.src = "./Images/brick.jpg";
+	//spaceTexture.image.src = "./Images/space.jpg";
+	spaceTexture.image.src = "./Images/space2.gif";
+	
+	// Planet Texture
+	planetTexture = gl.createTexture();
+	planetTexture.image = new Image();
+	planetTexture.image.onload = function(){
+		gl.bindTexture(gl.TEXTURE_2D, planetTexture); // bind texture as current texture to use
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, planetTexture.image); // upload texture image to GPU
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); // parameters for scaling up
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // parameters for scaling down
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); // prevent wrapped s coordinates (repeating)
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); // prevent wrapped t coordinates
+		gl.bindTexture(gl.TEXTURE_2D, null);
+    }
+	planetTexture.image.src = "./Images/earth.jpg";
+	
+	// Debris Texture
+	debrisTexture = gl.createTexture();
+    debrisTexture.image = new Image();
+    debrisTexture.image.onload = function(){
+		gl.bindTexture(gl.TEXTURE_2D, debrisTexture); // bind texture as current texture to use
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, debrisTexture.image); // upload texture image to GPU
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); // parameters for scaling up
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // parameters for scaling down
+		gl.bindTexture(gl.TEXTURE_2D, null);
+    }
+	debrisTexture.image.src = "./Images/brick.jpg";
 
+	// Heart Texture
 	heartTexture = gl.createTexture();
     heartTexture.image = new Image();
     heartTexture.image.onload = function(){
@@ -59,7 +88,7 @@ window.onload = function init() {
 		gl.bindTexture(gl.TEXTURE_2D, null);
     }
 	heartTexture.image.src = "./Images/heart.jpg";
-
+	
 	slopeVertices = [
 		vec3(length, 0, length),
 		vec3(length, 0, -length),
@@ -83,7 +112,9 @@ window.onload = function init() {
     positionX[0] = 0;
     positionZ[0] = -7;
 
-
+    // generate planet
+    tetrahedron(va, vb, vc, vd, 4, spherePoints, sphereNormals);
+    
     /*
     
 	// bind and set up position buffer
@@ -150,40 +181,6 @@ window.onload = function init() {
     render();
 }
 
-function Cube(vertices, points, normals, uv){
-    Quad(vertices, points, normals, uv, 0, 1, 2, 3, vec3(0, 0, 1));
-    Quad(vertices, points, normals, uv, 4, 0, 6, 2, vec3(0, 1, 0));
-    Quad(vertices, points, normals, uv, 4, 5, 0, 1, vec3(1, 0, 0));
-    Quad(vertices, points, normals, uv, 2, 3, 6, 7, vec3(1, 0, 1));
-    Quad(vertices, points, normals, uv, 6, 7, 4, 5, vec3(0, 1, 1));
-    Quad(vertices, points, normals, uv, 1, 5, 3, 7, vec3(1, 1, 0 ));
-}
-
-function Quad( vertices, points, normals, uv, v1, v2, v3, v4, normal){
-
-    normals.push(normal);
-    normals.push(normal);
-    normals.push(normal);
-    normals.push(normal);
-    normals.push(normal);
-    normals.push(normal);
-
-    uv.push(vec2(0,0));
-    uv.push(vec2(1,0));
-    uv.push(vec2(1,1));
-    uv.push(vec2(0,0));
-    uv.push(vec2(1,1));
-    uv.push(vec2(0,1));
-
-    points.push(vertices[v1]);
-    points.push(vertices[v3]);
-    points.push(vertices[v4]);
-    points.push(vertices[v1]);
-    points.push(vertices[v4]);
-    points.push(vertices[v2]);
-}
-
-
 function render() {
 		
 	// clear buffers and update time based on timer
@@ -203,12 +200,76 @@ function render() {
 	gl.uniformMatrix4fv(uniform_pMatrix, false, flatten(projectionMatrix));
 	
 	// set light position
-	gl.uniform3fv(uniform_lightPosition,  flatten(lightPosition));
-    gl.uniform1f(uniform_shininess,  shininess);
+	gl.uniform3fv(uniform_lightPosition, flatten(lightPosition));
+    gl.uniform1f(uniform_shininess, shininess);
 
+	// Outer Space
+
+	positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubePoints), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    attribute_position = gl.getAttribLocation(program, "vPosition");
+    gl.enableVertexAttribArray(attribute_position);
+    gl.vertexAttribPointer(attribute_position, 3, gl.FLOAT, false, 0, 0);
+
+    normalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeNormals), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    attribute_normal = gl.getAttribLocation(program, "vNormal");
+    gl.enableVertexAttribArray(attribute_normal);
+    gl.vertexAttribPointer(attribute_normal, 3, gl.FLOAT, false, 0, 0);	
+
+    uvBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeUv), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+    attribute_UV = gl.getAttribLocation(program, "vTextureCoordinates");
+    gl.enableVertexAttribArray(attribute_UV);
+    gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
+    
+	mvMatrix = viewMatrix;
+	mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
+	mvMatrix = mult(mvMatrix, translate(vec3(0, 1.5, 0)));
+	mvMatrix = mult(mvMatrix, rotate(time*0.75,vec3(1, 0, 0))); // TODO: sync rotation speed here with skid speed
+	mvMatrix = mult(mvMatrix, scale(vec3(20, 20, 20)));
+	gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, spaceTexture);
+    gl.uniform1i(uniform_sampler, 0)
 	
-// slope
+    gl.drawArrays(gl.TRIANGLES, 0, 36);
+    
+ // Planet (TODO: fix major bug - shows up as a cube)
+    
+    positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(spherePoints), gl.STATIC_DRAW);
 
+    normalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(sphereNormals), gl.STATIC_DRAW);
+	
+	// set model view matrix for planet
+	mvMatrix = viewMatrix;
+	mvMatrix = mult(mvMatrix, translate(vec3(5, 0, 0)));
+	mvMatrix = mult(mvMatrix, rotate(time*5, [1, 0, 0]));
+	mvMatrix = mult(mvMatrix, translate(vec3(0, 0, -10)));
+	mvMatrix = mult(mvMatrix, rotate(time*50, [0, 1, 0]));
+	mvMatrix = mult(mvMatrix, scale(vec3(1.5, 1.5, 1.5)));
+	
+	gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
+	
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, planetTexture);
+    gl.uniform1i(uniform_sampler, 0)
+	
+    for( var i=0; i<sphereIndex; i+=3)
+    	gl.drawArrays(gl.TRIANGLES, i, 3);
+    
+    // Slope
 
 	positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -227,7 +288,6 @@ function render() {
     gl.bufferData(gl.ARRAY_BUFFER, flatten(uvArray), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
     gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
-
     
     // scrolling of texture
     // apply relative translational positioning to uvArray (x and y components are additively increased by those values on each render)
@@ -239,11 +299,9 @@ function render() {
 	gl.bufferData(gl.ARRAY_BUFFER, flatten(uvArray), gl.STATIC_DRAW);
 
     // rotation of texture
-	// make a copy of uvArray
-	var uvArrayTemp = uvArray.slice();
-	// apply absolute rotational positioning to copy of uvArray
-	// absolute in the sense that the x and y components of uvArrayTemp are calculated anew each time, from 0 degrees to time*360 degrees
-	rotateUV(uvArrayTemp, textureDegree);		
+	var uvArrayTemp = uvArray.slice(); // make a copy of uvArray
+	// apply absolute rotational positioning to copy of uvArray (x and y components of uvArrayTemp are calculated anew each time, from 0 degrees to time*360 degrees)
+	rotateUV(uvArrayTemp, textureDegree);
 	// apply transformation via binding
 	gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, flatten(uvArrayTemp), gl.STATIC_DRAW);
@@ -265,8 +323,6 @@ function render() {
     gl.uniform1i(uniform_sampler, 0)
 
 	gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-
 
 	//Blocks
 
@@ -313,7 +369,7 @@ function render() {
    		gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
 
    		gl.activeTexture(gl.TEXTURE0);
-	    gl.bindTexture(gl.TEXTURE_2D, texture2);
+	    gl.bindTexture(gl.TEXTURE_2D, debrisTexture);
 	    gl.uniform1i(uniform_sampler, 0)
 
 	    if (positionZ[i] > -5) {
@@ -322,9 +378,8 @@ function render() {
 	}
 
 
-
-
     // Life HUD
+	
 	positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(cubePoints), gl.STATIC_DRAW);
@@ -362,72 +417,6 @@ function render() {
 	    gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
     	gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
-
-    window.requestAnimFrame(render);
-}
-
-function slope(vertices, points, normals, uv) {
-	normals.push(vec3(0, 1, 0));
-	normals.push(vec3(0, 1, 0));
-	normals.push(vec3(0, 1, 0));
-	normals.push(vec3(0, 1, 0));
-	normals.push(vec3(0, 1, 0));
-	normals.push(vec3(0, 1, 0));
-	
-    uv.push(vec2(0,0));
-    uv.push(vec2(1,0));
-    uv.push(vec2(1,1));
-    uv.push(vec2(0,0));
-    uv.push(vec2(1,1));
-    uv.push(vec2(0,1));
     
-    points.push(vertices[0]);
-    points.push(vertices[1]);
-    points.push(vertices[2]);
-    points.push(vertices[0]);
-    points.push(vertices[2]);
-    points.push(vertices[3]);
-}
-
-//given a 2D matrix of rows comprising vec2 of texture coordinates, transform each vec2 to be rotated by theta
-function rotateUV(matrix, theta) {
-
-	var rad = theta*Math.PI/180;
-
-	for(var i=0; i<matrix.length; i++) {
-		var tempX = matrix[i][0];
-		var tempY = matrix[i][1];
-		
-		// texture rotates at an axis located at the corner of the cube
-		// we need to translate the texture coordinates there first (a diagonal of 0.5 units, as it's a unit cube)
-		tempX = tempX-0.5;
-		tempY = tempY-0.5;
-		
-		// apply the rotation
-		var newX = tempX*Math.cos(rad) + tempY*Math.sin(rad);
-		var newY = -tempX*Math.sin(rad) + tempY*Math.cos(rad);
-		
-		// then translate texture back to original position
-		newX = newX+0.5;
-		newY = newY+0.5;
-		
-		// make changes to the matrix
-		matrix[i] = [newX, newY];
-	}
-}
-
-// given a 2D matrix of rows comprising vec2 of texture coordinates, transform each vec2 to be translated by distance (separated by x and y components)
-function translateUV(matrix, distanceX, distanceY) {
-		for(var i=0; i<matrix.length; i++) {
-		// take x and y components of the vec2 and translate them
-		var newX = matrix[i][0]+distanceX;
-		var newY = matrix[i][1]+distanceY;
-		
-		// make changes to the matrix
-		matrix[i] = [newX, newY];
-	}
-}
-
-function toRadians(theta) {
-	return theta*Math.PI/180;
+    window.requestAnimFrame(render);
 }

@@ -73,7 +73,7 @@ function Cube(vertices, points, normals, uv){
     Quad(vertices, points, normals, uv, 1, 5, 3, 7, vec3(1, 1, 0 ));
 }
 
-function Quad( vertices, points, normals, uv, v1, v2, v3, v4, normal){
+function Quad(vertices, points, normals, uv, v1, v2, v3, v4, normal) {
 
     normals.push(normal);
     normals.push(normal);
@@ -96,3 +96,71 @@ function Quad( vertices, points, normals, uv, v1, v2, v3, v4, normal){
     points.push(vertices[v4]);
     points.push(vertices[v2]);
 }
+
+
+//using the specified index i and complexity, output a sphere with distance/scale/rotational speed specified in data at index i
+//complexity specifies which position/normal buffer we use (more vs. less points) (REQUIREMENT 3, 4)
+function generatePlanet(i) {
+
+	// set model view matrix to bring planet into orbit
+	mvMatrix = viewMatrix;
+	mvMatrix = mult(mvMatrix, rotate(degree_xz, [0, 1, 0])); // allow rotational navigation
+	mvMatrix = mult(mvMatrix, rotate(degree_y, [1, 0, 0]));
+	mvMatrix = mult(mvMatrix, translate(vec3(x, y, z))); // allow translational navigation
+	mvMatrix = mult(mvMatrix, translate(vec3(0, 0, sunPositionZ)));
+	mvMatrix = mult(mvMatrix, rotate(time*orbitSpeed[i], [0, 1, 0]));
+	mvMatrix = mult(mvMatrix, translate(vec3(0, 0, distanceFromSun[i])));
+	mvMatrix = mult(mvMatrix, scale(vec3(planetScale[i], planetScale[i], planetScale[i])));
+	mvMatrix = mult(mvMatrix, rotate(time*rotationSpeed[i], [0, 1, 0]));
+
+	gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
+	gl.uniformMatrix4fv(uniform_pMatrix, false, flatten(projectionMatrix));
+
+	for( var i=0; i<sphereIndex; i+=3) 
+     gl.drawArrays(gl.TRIANGLES, i, 3);
+	
+}
+
+//functions for creating sphere data (points and normals)
+function tetrahedron(a, b, c, d, n, points, normals) {
+	divideTriangle(a, b, c, n, points, normals);
+	divideTriangle(d, c, b, n, points, normals);
+	divideTriangle(a, d, b, n, points, normals);
+	divideTriangle(a, c, d, n, points, normals);
+}
+
+function divideTriangle(a, b, c, count, points, normals) {
+	if ( count > 0 ) {
+		var ab = mix(a, b, 0.5);
+		var ac = mix(a, c, 0.5);
+		var bc = mix(b, c, 0.5);
+		
+		ab = normalize(ab, true);
+		ac = normalize(ac, true);
+		bc = normalize(bc, true);
+		
+		divideTriangle(a, ab, ac, count-1, points, normals);
+		divideTriangle(ab, b, bc, count-1, points, normals);
+		divideTriangle(bc, c, ac, count-1, points, normals);
+		divideTriangle(ab, bc, ac, count-1, points, normals);
+	}
+	else { 
+		triangle(a, b, c, points, normals);
+	}
+}
+
+function triangle(a, b, c, points, normals) {
+
+	points.push(a);
+	points.push(b);
+	points.push(c);
+	
+	// smooth shading
+	normals.push(a);
+	normals.push(b);
+	normals.push(c);
+
+	sphereIndex += 3;
+	
+}
+
