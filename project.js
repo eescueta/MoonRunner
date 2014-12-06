@@ -34,7 +34,8 @@ window.onload = function init() {
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // parameters for scaling down
 		gl.bindTexture(gl.TEXTURE_2D, null);
     }
-	texture.image.src = "./Images/snow.jpg";
+	//texture.image.src = "./Images/snow.jpg";
+    texture.image.src = "./Images/moonsurface.png";
 
     // Space Texture
 	spaceTexture = gl.createTexture();
