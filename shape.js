@@ -97,46 +97,79 @@ function Quad(vertices, points, normals, uv, v1, v2, v3, v4, normal) {
     points.push(vertices[v2]);
 }
 
-//functions for creating sphere data (points and normals)
-function tetrahedron(a, b, c, d, n, points, normals) {
-	divideTriangle(a, b, c, n, points, normals);
-	divideTriangle(d, c, b, n, points, normals);
-	divideTriangle(a, d, b, n, points, normals);
-	divideTriangle(a, c, d, n, points, normals);
+// set up sphere data
+// based on the Learning WebGL Tutorial (http://learningwebgl.com/blog/?p=1253)
+function setupSphere() {
+    var latitudeBands = 30;
+    var longitudeBands = 30;
+    var radius = 2;
+    var vertexPositionData = [];
+    var normalData = [];
+    var textureCoordData = [];
+    
+    for (var latNumber=0; latNumber <= latitudeBands; latNumber++) {
+        var theta = latNumber * Math.PI / latitudeBands;
+        var sinTheta = Math.sin(theta);
+        var cosTheta = Math.cos(theta);
+
+        for (var longNumber=0; longNumber <= longitudeBands; longNumber++) {
+            var phi = longNumber * 2 * Math.PI / longitudeBands;
+            var sinPhi = Math.sin(phi);
+            var cosPhi = Math.cos(phi);
+
+            var x = cosPhi * sinTheta;
+            var y = cosTheta;
+            var z = sinPhi * sinTheta;
+            var u = 1 - (longNumber / longitudeBands);
+            var v = 1 - (latNumber / latitudeBands);
+
+            normalData.push(x);
+            normalData.push(y);
+            normalData.push(z);
+            textureCoordData.push(u);
+            textureCoordData.push(v);
+            vertexPositionData.push(radius * x);
+            vertexPositionData.push(radius * y);
+            vertexPositionData.push(radius * z);
+        }
+    }
+
+    planetIndexData = [];
+    for (var latNumber=0; latNumber < latitudeBands; latNumber++) {
+        for (var longNumber=0; longNumber < longitudeBands; longNumber++) {
+            var first = (latNumber * (longitudeBands + 1)) + longNumber;
+            var second = first + longitudeBands + 1;
+            planetIndexData.push(first);
+            planetIndexData.push(second);
+            planetIndexData.push(first + 1);
+
+            planetIndexData.push(second);
+            planetIndexData.push(second + 1);
+            planetIndexData.push(first + 1);
+        }
+    }
+
+    planetNormals = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, planetNormals);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normalData), gl.STATIC_DRAW);
+    planetNormals.itemSize = 3;
+    planetNormals.numItems = normalData.length / 3;
+
+    planetUv = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, planetUv);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoordData), gl.STATIC_DRAW);
+    planetUv.itemSize = 2;
+    planetUv.numItems = textureCoordData.length / 2;
+
+    planetPoints = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, planetPoints);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPositionData), gl.STATIC_DRAW);
+    planetPoints.itemSize = 3;
+    planetPoints.numItems = vertexPositionData.length / 3;
+
+    planetIndexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, planetIndexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(planetIndexData), gl.STATIC_DRAW);
+    planetIndexBuffer.itemSize = 1;
+    planetIndexBuffer.numItems = planetIndexData.length;
 }
-
-function divideTriangle(a, b, c, count, points, normals) {
-	if ( count > 0 ) {
-		var ab = mix(a, b, 0.5);
-		var ac = mix(a, c, 0.5);
-		var bc = mix(b, c, 0.5);
-		
-		ab = normalize(ab, true);
-		ac = normalize(ac, true);
-		bc = normalize(bc, true);
-		
-		divideTriangle(a, ab, ac, count-1, points, normals);
-		divideTriangle(ab, b, bc, count-1, points, normals);
-		divideTriangle(bc, c, ac, count-1, points, normals);
-		divideTriangle(ab, bc, ac, count-1, points, normals);
-	}
-	else { 
-		triangle(a, b, c, points, normals);
-	}
-}
-
-function triangle(a, b, c, points, normals) {
-
-	points.push(a);
-	points.push(b);
-	points.push(c);
-	
-	// smooth shading
-	normals.push(a);
-	normals.push(b);
-	normals.push(c);
-
-	sphereIndex += 3;
-	
-}
-

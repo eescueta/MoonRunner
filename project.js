@@ -70,7 +70,7 @@ function init() {
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); // prevent wrapped t coordinates
 		gl.bindTexture(gl.TEXTURE_2D, null);
     }
-	planetTexture.image.src = "./Images/earth.jpg";
+	planetTexture.image.src = "./Images/planet.png";
 	
 	// Debris Texture
 	debrisTexture = gl.createTexture();
@@ -121,8 +121,8 @@ function init() {
     positionX[0] = 0;
     positionZ[0] = -7;
 
-    // generate planet
-    tetrahedron(va, vb, vc, vd, 4, spherePoints, sphereNormals);
+    // generate sphere
+    setupSphere();
     
     /*
     
@@ -186,7 +186,7 @@ function init() {
 	// reset timer and enable depth buffer before rendering
     timer.reset();	
     gl.enable(gl.DEPTH_TEST);
-	    
+    
     render();
 }
 
@@ -220,72 +220,6 @@ function render() {
 	gl.uniform3fv(uniform_lightPosition, flatten(lightPosition));
     gl.uniform1f(uniform_shininess, shininess);
 
-	// Outer Space
-	positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubePoints), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    attribute_position = gl.getAttribLocation(program, "vPosition");
-    gl.enableVertexAttribArray(attribute_position);
-    gl.vertexAttribPointer(attribute_position, 3, gl.FLOAT, false, 0, 0);
-
-    normalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeNormals), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    attribute_normal = gl.getAttribLocation(program, "vNormal");
-    gl.enableVertexAttribArray(attribute_normal);
-    gl.vertexAttribPointer(attribute_normal, 3, gl.FLOAT, false, 0, 0);	
-    
-    uvBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeUv), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
-    attribute_UV = gl.getAttribLocation(program, "vTextureCoordinates");
-    
-    gl.enableVertexAttribArray(attribute_UV);
-    gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
-	mvMatrix = viewMatrix;
-	mvMatrix = mult(mvMatrix, rotate(textureDegree,vec3(0, 1, 0)));
-	mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
-	mvMatrix = mult(mvMatrix, translate(vec3(0, 1.5, 0)));
-	mvMatrix = mult(mvMatrix, rotate(time*0.75,vec3(1, 0, 0))); // TODO: sync rotation speed here with skid speed
-	mvMatrix = mult(mvMatrix, scale(vec3(20, 20, 20)));
-	gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
-
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, spaceTexture);
-    gl.uniform1i(uniform_sampler, 0)
-	
-    gl.drawArrays(gl.TRIANGLES, 0, 36);
-    
- // Planet (TODO: fix major bug - shows up as a cube)
-    
-    positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(spherePoints), gl.STATIC_DRAW);
-
-    normalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(sphereNormals), gl.STATIC_DRAW);
-	
-	// set model view matrix for planet
-	mvMatrix = viewMatrix;
-	mvMatrix = mult(mvMatrix, translate(vec3(5, 0, 0)));
-	mvMatrix = mult(mvMatrix, rotate(time*5, [1, 0, 0]));
-	mvMatrix = mult(mvMatrix, translate(vec3(0, 0, -10)));
-	mvMatrix = mult(mvMatrix, rotate(time*50, [0, 1, 0]));
-	mvMatrix = mult(mvMatrix, scale(vec3(1.5, 1.5, 1.5)));
-	
-	gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
-	
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, planetTexture);
-    gl.uniform1i(uniform_sampler, 0)
-	
-    for( var i=0; i<sphereIndex; i+=3)
-    	gl.drawArrays(gl.TRIANGLES, i, 3);
-    
     // Slope
 
     positionBuffer = gl.createBuffer();
@@ -341,6 +275,72 @@ function render() {
 
 	gl.drawArrays(gl.TRIANGLES, 0, 6);
 
+    // Outer Space
+	positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubePoints), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    attribute_position = gl.getAttribLocation(program, "vPosition");
+    gl.enableVertexAttribArray(attribute_position);
+    gl.vertexAttribPointer(attribute_position, 3, gl.FLOAT, false, 0, 0);
+
+    normalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeNormals), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    attribute_normal = gl.getAttribLocation(program, "vNormal");
+    gl.enableVertexAttribArray(attribute_normal);
+    gl.vertexAttribPointer(attribute_normal, 3, gl.FLOAT, false, 0, 0);	
+    
+    uvBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeUv), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+    attribute_UV = gl.getAttribLocation(program, "vTextureCoordinates");
+    
+    gl.enableVertexAttribArray(attribute_UV);
+    gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
+	mvMatrix = viewMatrix;
+	mvMatrix = mult(mvMatrix, rotate(textureDegree,vec3(0, 1, 0)));
+	mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
+	mvMatrix = mult(mvMatrix, translate(vec3(0, 1.5, 0)));
+	mvMatrix = mult(mvMatrix, rotate(time*0.75,vec3(1, 0, 0))); // TODO: sync rotation speed here with skid speed
+	mvMatrix = mult(mvMatrix, scale(vec3(20, 20, 20)));
+	gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, spaceTexture);
+    gl.uniform1i(uniform_sampler, 0)
+	
+    gl.drawArrays(gl.TRIANGLES, 0, 36);
+    
+    // Planet
+
+	gl.activeTexture(gl.TEXTURE0);
+	gl.bindTexture(gl.TEXTURE_2D, planetTexture);
+	gl.uniform1i(uniform_sampler, 0)
+	
+    gl.bindBuffer(gl.ARRAY_BUFFER, planetPoints);
+    gl.vertexAttribPointer(attribute_position, planetPoints.itemSize, gl.FLOAT, false, 0, 0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, planetUv);
+    gl.vertexAttribPointer(attribute_UV, planetUv.itemSize, gl.FLOAT, false, 0, 0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, planetNormals);
+    gl.vertexAttribPointer(attribute_normal, planetNormals.itemSize, gl.FLOAT, false, 0, 0);
+
+	// set model view matrix for planet
+	mvMatrix = viewMatrix;
+	mvMatrix = mult(mvMatrix, translate(vec3(5, 0, 0)));
+	mvMatrix = mult(mvMatrix, rotate(time * 3, [ 1, 0, 0 ]));
+	mvMatrix = mult(mvMatrix, translate(vec3(0, 0, -10)));
+	mvMatrix = mult(mvMatrix, rotate(time * 50, [ 0, 1, 0 ]));
+	mvMatrix = mult(mvMatrix, scale(vec3(0.5, 0.5, .5)));
+	gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
+    
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, planetIndexBuffer);
+    gl.drawElements(gl.TRIANGLES, planetIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+    
 	//Blocks
 
 	positionBuffer = gl.createBuffer();
@@ -392,7 +392,13 @@ function render() {
    		gl.activeTexture(gl.TEXTURE0);
 	    gl.bindTexture(gl.TEXTURE_2D, debrisTexture);
 	    gl.uniform1i(uniform_sampler, 0)
-
+	    
+		if (positionZ[i] > 1.5) {
+			positionX[i] = Math.floor(Math.random()*4) + 0;
+			positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
+			positionZ[i] = -7;
+		}
+	    
 	    if (positionZ[i] > -5) {
 			gl.drawArrays(gl.TRIANGLES, 0, 36);
 		}
