@@ -97,30 +97,6 @@ function Quad(vertices, points, normals, uv, v1, v2, v3, v4, normal) {
     points.push(vertices[v2]);
 }
 
-
-//using the specified index i and complexity, output a sphere with distance/scale/rotational speed specified in data at index i
-//complexity specifies which position/normal buffer we use (more vs. less points) (REQUIREMENT 3, 4)
-function generatePlanet(i) {
-
-	// set model view matrix to bring planet into orbit
-	mvMatrix = viewMatrix;
-	mvMatrix = mult(mvMatrix, rotate(degree_xz, [0, 1, 0])); // allow rotational navigation
-	mvMatrix = mult(mvMatrix, rotate(degree_y, [1, 0, 0]));
-	mvMatrix = mult(mvMatrix, translate(vec3(x, y, z))); // allow translational navigation
-	mvMatrix = mult(mvMatrix, translate(vec3(0, 0, sunPositionZ)));
-	mvMatrix = mult(mvMatrix, rotate(time*orbitSpeed[i], [0, 1, 0]));
-	mvMatrix = mult(mvMatrix, translate(vec3(0, 0, distanceFromSun[i])));
-	mvMatrix = mult(mvMatrix, scale(vec3(planetScale[i], planetScale[i], planetScale[i])));
-	mvMatrix = mult(mvMatrix, rotate(time*rotationSpeed[i], [0, 1, 0]));
-
-	gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
-	gl.uniformMatrix4fv(uniform_pMatrix, false, flatten(projectionMatrix));
-
-	for( var i=0; i<sphereIndex; i+=3) 
-     gl.drawArrays(gl.TRIANGLES, i, 3);
-	
-}
-
 //functions for creating sphere data (points and normals)
 function tetrahedron(a, b, c, d, n, points, normals) {
 	divideTriangle(a, b, c, n, points, normals);

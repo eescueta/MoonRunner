@@ -4,8 +4,15 @@
  * 
  */
 
-window.onload = function init() {
+window.onload = init;
 
+function init() {
+
+	// reset variables
+	life = 3;
+	textureDegree = 0;
+	textureScrollSpeed = 0.005;
+	
 	// initialize canvas
     canvas = document.getElementById( "gl-canvas" );
     gl = WebGLUtils.setupWebGL( canvas );
@@ -35,7 +42,7 @@ window.onload = function init() {
 		gl.bindTexture(gl.TEXTURE_2D, null);
     }
 	//texture.image.src = "./Images/snow.jpg";
-    texture.image.src = "./Images/moonsurface.png";
+    texture.image.src = "./Images/moonsurface2.png";
 
     // Space Texture
 	spaceTexture = gl.createTexture();
@@ -183,7 +190,15 @@ window.onload = function init() {
 }
 
 function render() {
-		
+	
+	console.log(life);
+	
+	// TODO: on losing all lives, game over!
+	if(life<=0) {
+		console.log("Game over!");
+		init();
+	}
+	
 	// clear buffers and update time based on timer
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     time += timer.getElapsedTime() / 1000;
@@ -205,7 +220,6 @@ function render() {
     gl.uniform1f(uniform_shininess, shininess);
 
 	// Outer Space
-
 	positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(cubePoints), gl.STATIC_DRAW);
@@ -221,16 +235,17 @@ function render() {
     attribute_normal = gl.getAttribLocation(program, "vNormal");
     gl.enableVertexAttribArray(attribute_normal);
     gl.vertexAttribPointer(attribute_normal, 3, gl.FLOAT, false, 0, 0);	
-
+    
     uvBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeUv), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
     attribute_UV = gl.getAttribLocation(program, "vTextureCoordinates");
+    
     gl.enableVertexAttribArray(attribute_UV);
     gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
-    
 	mvMatrix = viewMatrix;
+	mvMatrix = mult(mvMatrix, rotate(textureDegree,vec3(0, 1, 0)));
 	mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
 	mvMatrix = mult(mvMatrix, translate(vec3(0, 1.5, 0)));
 	mvMatrix = mult(mvMatrix, rotate(time*0.75,vec3(1, 0, 0))); // TODO: sync rotation speed here with skid speed
@@ -272,7 +287,7 @@ function render() {
     
     // Slope
 
-	positionBuffer = gl.createBuffer();
+    positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(pointsArray), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -354,10 +369,14 @@ function render() {
 
 	for(var i = 0; i < 10; i++)
 	{
-		positionZ[i] += 0.01;
+		//positionZ[i] += 0.01;
+		positionZ[i] += textureScrollSpeed; // TODO: collision not detected for textureScrollSpeed>0.023
 		mvMatrix = viewMatrix;
-		mvMatrix = mult(mvMatrix, translate(vec3(x,y,z)));
+		mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
+		//mvMatrix = mult(mvMatrix, translate(vec3(positionX[i], 1, positionZ[i])));
 		mvMatrix = mult(mvMatrix, translate(vec3(positionX[i] + scrollX, 1, positionZ[i])));
+		mvMatrix = mult(mvMatrix, rotate(textureDegree, (vec3(0, 1, 0))));
+		
 		if (-0.15 < (positionX[i] + scrollX) && (positionX[i] + scrollX) < 0.15)
 		{
 			if (-0.005 < (positionZ[i]) && (positionZ[i]) < 0.005)
@@ -418,6 +437,6 @@ function render() {
 	    gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
     	gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
-    
+
     window.requestAnimFrame(render);
 }
