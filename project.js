@@ -4,93 +4,6 @@
  * 
  */
 
-// global components
-var canvas;
-var gl;
-var program;
-var length = 0.5;
-var time = 0.0;
-var timer = new Timer();
-
-var life = 3;
-var score = 0;
-
-// audio
-var smash = new Audio("./Sounds/smash.wav"); 
-
-// navigation system variables
-var x = 0; // x-axis displacement from origin (controls right/left)
-var y = 0; // y-axis displacement from origin (controls up/down)
-var z = 0; // z-axis displacement from origin (controls back/forward)
-var textureDegree = 0;
-var textureScrollSpeed = 0.005;
-
-var scrollX = 0;
-var scrollY = 0;
-var scrollZ = 0;
-
-// buffers for vertices and normals
-var positionBuffer;
-var normalBuffer;
-var uvBuffer;
-
-// view transformation matrices
-var uniform_mvpMatrix;
-var viewMatrix;
-var projectionMatrix;
-var mvpMatrix;
-var orthoProjectionMatrix;
-
-// light position and attribute data
-var attribute_position;
-var attribute_normal;
-var uniform_lightPosition;
-var uniform_shininess;
-var uniform_sampler;
-
-var shininess = 50;
-var lightPosition = vec3(0.0, 0.0, 0.0);
-
-// slope arrays
-var pointsArray = [];
-var normalsArray = [];
-var uvArray = [];
-var index = 0;
-
-//cube stuff
-var vertices = [
-        vec3(  length,   length, length ), //vertex 0
-        vec3(  length,  -length, length ), //vertex 1
-        vec3( -length,   length, length ), //vertex 2
-        vec3( -length,  -length, length ),  //vertex 3 
-        vec3(  length,   length, -length ), //vertex 4
-        vec3(  length,  -length, -length ), //vertex 5
-        vec3( -length,   length, -length ), //vertex 6
-        vec3( -length,  -length, -length )  //vertex 7   
-    ];
-
-var positionX = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]    
-var positionZ = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]    
-
-var cubePoints = [];
-var cubeNormals = [];
-var cubeUv = [];
-
-// Heart position
-var heartPositions = [
-	vec3(-4.5, 4.5, 0), 
-    vec3(-3.5, 4.5, 0), 
-    vec3(-2.5, 4.5, 0)
-];
-
-// texture
-var texture;
-
-// view matrix
-var eye = vec3(0, 1, 0.001);
-var at = vec3(0, 0, -100);
-var up = vec3(0, 1, 0);
-
 window.onload = function init() {
 
 	// initialize canvas
@@ -99,56 +12,7 @@ window.onload = function init() {
     if ( !gl ) { alert( "WebGL isn't available" ); }
 
 	// set up event listener on the keyboard for color cycling, toggling crosshair, navigating, and resetting
-	document.onkeydown = function(e) {
-		e = e || window.event;
-		
-		if(e.keyCode===87) { // "w" (move forward)
-			z+=0.1;
-		}
-		else if(e.keyCode===83) { // "s" (move back)
-			z-=0.1;
-		}
-		else if(e.keyCode===65) { // "a" (move left)
-			x+=0.1;
-		}
-		else if(e.keyCode===68) { // "d" (move right)
-			x-=0.1;
-		}
-		else if(e.keyCode===38) { // "up" (move camera up)
-			y-=0.1;
-			scrollZ += 0.1;
-		}
-		else if( e.keyCode===40) { // "down" (move camera down)
-			y+=0.1;
-			scrollZ -= 0.1;
-		}
-		else if(e.keyCode===37) { // "left" (turn left)
-			console.log(positionZ);
-			if(textureDegree>-15) {
-				textureDegree-=0.5;
-				scrollX += 0.1;
-			}
-		}
-		else if(e.keyCode===39) { // "right" (turn right)
-			console.log(positionZ);
-			if(textureDegree<15) {
-				textureDegree+=0.5;
-				scrollX -= 0.1;
-			}
-		}
-		else if(e.keyCode===73) { // "i" (speed up)
-			textureScrollSpeed+=0.0005;
-		}
-		else if(e.keyCode===79) { // "o" (slow down)
-			if(textureScrollSpeed>=0.0005)
-				textureScrollSpeed-=0.0005;
-		}
-		else if(e.keyCode===27) { // "esc" resets the camera to original position
-			x=0;
-			y=0;
-			z=0;
-		}
-	};
+	initEventListener();
 	
 	// set up world, specifying the viewport, enabling depth buffer, and clearing color buffer
     gl.viewport( 0, 0, canvas.width, canvas.height );
@@ -168,8 +32,6 @@ window.onload = function init() {
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image); // upload texture image to GPU
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); // parameters for scaling up
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // parameters for scaling down
-		// gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); // prevent wrapped s coordinates (repeating)
-		// gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); // prevent wrapped t coordinates
 		gl.bindTexture(gl.TEXTURE_2D, null);
     }
 	texture.image.src = "./Images/snow.jpg";
@@ -181,8 +43,6 @@ window.onload = function init() {
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture2.image); // upload texture image to GPU
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); // parameters for scaling up
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // parameters for scaling down
-		// gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); // prevent wrapped s coordinates (repeating)
-		// gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); // prevent wrapped t coordinates
 		gl.bindTexture(gl.TEXTURE_2D, null);
     }
 	texture2.image.src = "./Images/brick.jpg";
