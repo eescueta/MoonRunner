@@ -9,6 +9,9 @@ var SMART_MOVEMENT = false;
 var DEBUGGING_MODE = false;
 var RESET_READY = false;
 
+var BORDER_COLOR_INVINCIBLE = "rgb(102, 178, 255)";
+var BORDER_COLOR_NORMAL = "rgb(128, 128, 128)";
+
 var gamestart = false;
 var life = 3;
 var score = 0;

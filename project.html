@@ -82,44 +82,43 @@ void main() {
 </script>
 
 <body>
-<div id="canvas-wrap">
+
+<div id="canvas-wrap" style="width:1024px; margin:0 auto; border-style: ridge; border-width: 15px; border-color: gray;" >
 	<canvas id="gl-canvas" width="1024" height="768">
 	Oops ... your browser doesn't support the HTML5 canvas element
 	</canvas>
 	<h3 class="label">Score: <span id="score">0</span></h3>
+	
 	<div class="interface">
 	</div>
+	
 </div>
+
 	 <!-- <div id="hitbox">test</div> -->
 	<br />
 
+<div id="game-text" style="width:1024px; margin:0 auto;">
 	Instructions: 
 	<ul>
-		You are a garbage-collecting rover on the moon.
-		The moon is home to countless debris, which will damage (and eventually destroy) your craft if you collide into them.
+		You're a garbage-collecting rover on the moon.
+		The moon is home to countless debris which can damage (and eventually destroy) your craft if you collide into them.
 		<br />
 		Unfortunately, both your brakes and accelerator have malfunctioned. Under these circumstances, your task, should you choose to accept it,
 		is to collect as many American flags littered on the moon's surface as possible. Good luck!
 	</ul>
-	
-	<br />
-	
 	Controls:   
 	<ul>
-		<li>Left Arrow: veer left</li>
-		<li>Right Arrow: veer right</li>
+		<li>Left Arrow: turn left</li>
+		<li>Right Arrow: turn right</li>
 	</ul>
-	
-	<br />
-	
 	Objects
 	<ul>
-		<li>Debris: dodge these! Hitting one will take away a life!</li>
-		<li>Health Pack: get this to replenish a heart (up to a maximum of 3)!</li>
+		<li>Debris: dodge these - hitting debris will take away a life!</li>
+		<li>Health Pack: grab it to replenish a life (you can hold a max of 3)!</li>
 		<li>American Flag: grab it to rack up more points!</li>
-		<li>Slow Down Sign: run through this to slow down! </li>
+		<li>"Slow" Sign: run through this to slow down! </li>
 	</ul>
-
+</div>
 
 </body>
 </html>

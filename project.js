@@ -130,8 +130,21 @@ function render() {
     	invincibility++;
     }
 
+    
+    // if user is invincible, flash the border between two colors
     if(previouslyHit && invincibility <= invincibilityPeriod) {
-    	// user is invincible! show flashing screen
+        if($("#canvas-wrap").css("border-top-color")===BORDER_COLOR_INVINCIBLE)
+        	$("#canvas-wrap").css("border-color", BORDER_COLOR_NORMAL);
+        else
+        	$("#canvas-wrap").css("border-color", BORDER_COLOR_INVINCIBLE);
+    }
+    else {
+    	$("#canvas-wrap").css("border-color", BORDER_COLOR_NORMAL);
+    }
+    
+    /*
+    if(previouslyHit && invincibility <= invincibilityPeriod) {
+
     	if(document.body.style.backgroundColor=="lightblue")
     		document.body.style.backgroundColor="white";
     	else
@@ -140,6 +153,7 @@ function render() {
     else {
    	 	document.body.style.backgroundColor="white";
     }
+    */
 
     $('#score').html(score);
 	
