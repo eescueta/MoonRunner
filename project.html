@@ -81,13 +81,14 @@ void main() {
 </script>
 
 <body>
-<div class="interface">
-<canvas id="gl-canvas" width="1024" height="768">
-Oops ... your browser doesn't support the HTML5 canvas element
-</canvas>
-
+<div id="canvas-wrap">
+	<canvas id="gl-canvas" width="1024" height="768">
+	Oops ... your browser doesn't support the HTML5 canvas element
+	</canvas>
 	<h3 class="label">Score: <span id="score">0</span></h3>
-
+	<div class="interface">
+	</div>
+</div>
 	 <!-- <div id="hitbox">test</div> -->
 	<br />
 
@@ -98,7 +99,7 @@ Oops ... your browser doesn't support the HTML5 canvas element
 		<li>left arrow: turn left</li>
 		<li>right arrow: turn right</li>
 	</ul>
-</div>
+
 
 </body>
 </html>

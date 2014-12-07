@@ -192,10 +192,15 @@ function init() {
 
 function render() {
 	
-	// TODO: on losing all lives, game over!
+	if (!gamestart) {
+		$( ".interface" ).html("<img src='./Images/start.png'>");
+		return;
+	}
+	
 	if(life<=0) {
 		console.log("Game over!");
-		init();
+		$( ".interface" ).html("<img src='./Images/gameover.png'>");
+		return;
 	}
 	
 	// clear buffers and update time based on timer
@@ -205,6 +210,7 @@ function render() {
     if (life > 0)
     {
     	score += 1;
+    	invincibility++;
     }
 
     $('#score').html(score);
@@ -381,16 +387,20 @@ function render() {
 		{
 			if (-0.005 < (positionZ[i]) && (positionZ[i]) < 0.005+textureScrollSpeed)
 			{
-				life--;
-				
-				// play up to three "smash" audio files at the same time 
-				if(smash1.currentTime==0)
-					smash1.play();
-				else if(smash2.currentTime==0)
-					smash2.play();
-				else
-					smash3.play();
-				
+				if (life > 0 && invincibility > 60)
+				{
+					life--;
+					invincibility = 0;
+					
+					// play up to three "smash" audio files at the same time 
+					if(smash1.currentTime==0)
+						smash1.play();
+					else if(smash2.currentTime==0)
+						smash2.play();
+					else
+						smash3.play()
+					;
+				}
 			}
 		} 
 		mvMatrix = mult(mvMatrix, scale(vec3(0.25, 0.5, 0.05)));

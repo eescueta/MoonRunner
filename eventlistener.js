@@ -52,5 +52,16 @@ function initEventListener() {
 			y=0;
 			z=0;
 		}
+		else if(e.keyCode===82) { // "r" (reset the game)
+			$( ".interface" ).html("");
+			init();
+		}
+		else if(e.keyCode===80) { // "r" (reset the game)
+			if (!gamestart) {
+				$( ".interface" ).html("");
+				gamestart = true;
+				init();
+			}
+		}
 	};
 }

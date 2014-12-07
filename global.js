@@ -6,8 +6,13 @@ var length = 0.5;
 var time = 0.0;
 var timer = new Timer();
 
+var gamestart = false;
 var life = 3;
 var score = 0;
+var invincibility = 0;
+
+var invincibilityPeriod = 60; // number of invincibility frames after being hit
+
 
 // audio
 var smash1 = new Audio("./Sounds/smash.wav");
