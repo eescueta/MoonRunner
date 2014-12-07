@@ -10,7 +10,9 @@ var life = 3;
 var score = 0;
 
 // audio
-var smash = new Audio("./Sounds/smash.wav"); 
+var smash1 = new Audio("./Sounds/smash.wav");
+var smash2 = new Audio("./Sounds/smash.wav");
+var smash3 = new Audio("./Sounds/smash.wav");
 
 // navigation system variables
 var x = 0; // x-axis displacement from origin (controls right/left)

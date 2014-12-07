@@ -192,8 +192,6 @@ function init() {
 
 function render() {
 	
-	console.log(life);
-	
 	// TODO: on losing all lives, game over!
 	if(life<=0) {
 		console.log("Game over!");
@@ -367,23 +365,32 @@ function render() {
     gl.enableVertexAttribArray(attribute_UV);
     gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
 
-
+    // TODO: prevent walls from stacking (subtracts two lives)
 	for(var i = 0; i < 10; i++)
 	{
 		//positionZ[i] += 0.01;
-		positionZ[i] += textureScrollSpeed; // TODO: collision not detected for textureScrollSpeed>0.023
+		positionZ[i] += textureScrollSpeed;
 		mvMatrix = viewMatrix;
 		mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
 		//mvMatrix = mult(mvMatrix, translate(vec3(positionX[i], 1, positionZ[i])));
 		mvMatrix = mult(mvMatrix, translate(vec3(positionX[i] + scrollX, 1, positionZ[i])));
 		mvMatrix = mult(mvMatrix, rotate(textureDegree, (vec3(0, 1, 0))));
 		
+		
 		if (-0.15 < (positionX[i] + scrollX) && (positionX[i] + scrollX) < 0.15)
 		{
 			if (-0.005 < (positionZ[i]) && (positionZ[i]) < 0.005+textureScrollSpeed)
 			{
 				life--;
-				smash.play();
+				
+				// play up to three "smash" audio files at the same time 
+				if(smash1.currentTime==0)
+					smash1.play();
+				else if(smash2.currentTime==0)
+					smash2.play();
+				else
+					smash3.play();
+				
 			}
 		} 
 		mvMatrix = mult(mvMatrix, scale(vec3(0.25, 0.5, 0.05)));

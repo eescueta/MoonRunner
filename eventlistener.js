@@ -27,14 +27,14 @@ function initEventListener() {
 			scrollZ -= 0.1;
 		}
 		else if(e.keyCode===37) { // "left" (turn left)
-			console.log(positionZ);
+			//console.log(positionZ);
 			if(textureDegree>-15) {
 				textureDegree-=0.5;
 				scrollX += 0.1;
 			}
 		}
 		else if(e.keyCode===39) { // "right" (turn right)
-			console.log(positionZ);
+			//console.log(positionZ);
 			if(textureDegree<15) {
 				textureDegree+=0.5;
 				scrollX -= 0.1;
