@@ -87,48 +87,16 @@ function loadWorld() {
 	previouslyHit = false;
 
     // reset debris positions
-    for (var i = 0; i < 10; i++)
-    {
-    	debris_positionX[i] = Math.floor(Math.random()*4) + 0;
-    	debris_positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
-    	debris_positionZ[i] = Math.floor(Math.random()*10) + 6;
-    	debris_positionZ[i] *= -1;
-    }
-    debris_positionX[0] = 0;
-    debris_positionZ[0] = -7;
+	setObjectPositions(debris_positionX, debris_positionZ, NUM_DEBRIS);
     
     // reset health positions
-    for (var i = 0; i < 1; i++)
-    {
-    	health_positionX[i] = Math.floor(Math.random()*4) + 0;
-    	health_positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
-    	health_positionZ[i] = Math.floor(Math.random()*10) + 6;
-    	health_positionZ[i] *= -1;
-    }
-    health_positionX[0] = 0;
-    health_positionZ[0] = -7;
+	setObjectPositions(health_positionX, health_positionZ, NUM_HEALTH);
     
     // reset flag positions
-    for (var i = 0; i < 2; i++)
-    {
-    	flag_positionX[i] = Math.floor(Math.random()*4) + 0;
-    	flag_positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
-    	flag_positionZ[i] = Math.floor(Math.random()*10) + 6;
-    	flag_positionZ[i] *= -1;
-    }
-    flag_positionX[0] = 0;
-    flag_positionZ[0] = -7;
-    
+	setObjectPositions(flag_positionX, flag_positionZ, NUM_FLAG);
+	
     // reset slow positions
-    for (var i = 0; i < 2; i++)
-    {
-    	slow_positionX[i] = Math.floor(Math.random()*4) + 0;
-    	slow_positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
-    	slow_positionZ[i] = Math.floor(Math.random()*10) + 6;
-    	slow_positionZ[i] *= -1;
-    }
-    slow_positionX[0] = 0;
-    slow_positionZ[0] = -7;
+	setObjectPositions(slow_positionX, slow_positionZ, NUM_SLOW);
 
 	// reset timer and enable depth buffer before rendering
     timer.reset();
@@ -148,6 +116,7 @@ function render() {
 	
 	if(life<=0) {
 		$( ".interface" ).html("<img src='./Images/gameover.png'>");
+		RESET_READY = true;
 		return;
 	}
 	
@@ -304,6 +273,7 @@ function render() {
     
 	// Debris
 
+    /*
 	positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(cubePoints), gl.STATIC_DRAW);
@@ -321,15 +291,26 @@ function render() {
     gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeUv), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(attribute_UV);
     gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
+    */
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, planetPoints);
+    gl.vertexAttribPointer(attribute_position, planetPoints.itemSize, gl.FLOAT, false, 0, 0);
 
-	for(var i = 0; i < 10; i++)
+    gl.bindBuffer(gl.ARRAY_BUFFER, planetUv);
+    gl.vertexAttribPointer(attribute_UV, planetUv.itemSize, gl.FLOAT, false, 0, 0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, planetNormals);
+    gl.vertexAttribPointer(attribute_normal, planetNormals.itemSize, gl.FLOAT, false, 0, 0);
+    
+	for(var i = 0; i < NUM_DEBRIS; i++)
 	{
 		debris_positionZ[i] += textureScrollSpeed;
 		mvMatrix = viewMatrix;
 		mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
 		mvMatrix = mult(mvMatrix, translate(vec3(debris_positionX[i] + scrollX, 1, debris_positionZ[i])));
 		mvMatrix = mult(mvMatrix, rotate(textureDegree, (vec3(0, 1, 0))));
-		mvMatrix = mult(mvMatrix, scale(vec3(0.25, 0.25, 0.05)));
+		//mvMatrix = mult(mvMatrix, scale(vec3(0.25, 0.25, 0.05))); // for cube debris
+		mvMatrix = mult(mvMatrix, scale(vec3(0.075, 0.09, 0.05))); // for sphere debris
    		gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
 		
 		if (-0.15 < (debris_positionX[i] + scrollX) && (debris_positionX[i] + scrollX) < 0.15)
@@ -342,10 +323,7 @@ function render() {
 					invincibility = 0;
 					previouslyHit = true;
 					
-					if(smashAudio.currentTime==0)
-						smashAudio.play();
-					else
-						(new Audio("./Sounds/smash.wav")).play();
+					playAudio("./Sounds/smash.wav");
 						
 				}
 			}
@@ -356,26 +334,51 @@ function render() {
 	    gl.uniform1i(uniform_sampler, 0)
 	    
 		if (debris_positionZ[i] > 1.5) {
-			debris_positionX[i] = Math.floor(Math.random()*4) + 0;
+			debris_positionX[i] = Math.floor(Math.random()*4) + Math.random();
 			debris_positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
 			debris_positionZ[i] = -7;
 		}
 	    
 	    if (debris_positionZ[i] > -5) {
-			gl.drawArrays(gl.TRIANGLES, 0, 36);
+	    	//gl.drawArrays(gl.TRIANGLES, 0, 36); // for cube debris
+	    	
+	    	// for sphere debris
+	        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, planetIndexBuffer);
+	        gl.drawElements(gl.TRIANGLES, planetIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+			
 		}
 	}
 
+	// Switch back to cube data for other objects
+	
+	positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubePoints), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(attribute_position);
+    gl.vertexAttribPointer(attribute_position, 3, gl.FLOAT, false, 0, 0);
+
+    normalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeNormals), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(attribute_normal);
+    gl.vertexAttribPointer(attribute_normal, 3, gl.FLOAT, false, 0, 0);	
+
+    uvBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeUv), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(attribute_UV);
+    gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
+	
 	// Health Packs
 
-	for(var i = 0; i < 1; i++)
+	for(var i = 0; i < NUM_HEALTH; i++)
 	{
 		health_positionZ[i] += textureScrollSpeed; 
 		mvMatrix = viewMatrix;
 		mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
 		mvMatrix = mult(mvMatrix, translate(vec3(health_positionX[i] + scrollX, 1, health_positionZ[i])));
 		mvMatrix = mult(mvMatrix, rotate(textureDegree, (vec3(0, 1, 0))));
-		mvMatrix = mult(mvMatrix, scale(vec3(0.25, 0.25, 0.05)));
+		mvMatrix = mult(mvMatrix, scale(vec3(0.2, 0.25, 0.15)));
    		gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
 		
 		if (-0.15 < (health_positionX[i] + scrollX) && (health_positionX[i] + scrollX) < 0.15)
@@ -384,11 +387,7 @@ function render() {
 			{
 				if(life<3)
 					life++;
-				
-				if(healthAudio.currentTime==0)
-					healthAudio.play();
-				else
-					(new Audio("./Sounds/health.wav")).play();
+				playAudio("./Sounds/health.wav");
 			}
 		} 
 
@@ -397,7 +396,7 @@ function render() {
 	    gl.uniform1i(uniform_sampler, 0)
 	    
 		if (health_positionZ[i] > 1.5) {
-			health_positionX[i] = Math.floor(Math.random()*4) + 0;
+			health_positionX[i] = Math.floor(Math.random()*4) + Math.random();
 			health_positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
 			health_positionZ[i] = -7;
 		}
@@ -409,7 +408,7 @@ function render() {
 	
 	// Flags
 
-	for(var i = 0; i < 2; i++)
+	for(var i = 0; i < NUM_FLAG; i++)
 	{
 		flag_positionZ[i] += textureScrollSpeed; 
 		mvMatrix = viewMatrix;
@@ -424,11 +423,7 @@ function render() {
 			if (-0.005 < (flag_positionZ[i]) && (flag_positionZ[i]) < 0.005+textureScrollSpeed)
 			{
 				score+=250;
-
-				if(flagAudio.currentTime==0)
-					flagAudio.play();
-				else
-					(new Audio("./Sounds/flag.wav")).play();
+				playAudio("./Sounds/flag.wav");
 				
 			}
 		} 
@@ -438,7 +433,7 @@ function render() {
 	    gl.uniform1i(uniform_sampler, 0)
 	    
 		if (flag_positionZ[i] > 1.5) {
-			flag_positionX[i] = Math.floor(Math.random()*4) + 0;
+			flag_positionX[i] = Math.floor(Math.random()*4) + Math.random();
 			flag_positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
 			flag_positionZ[i] = -7;
 		}
@@ -450,14 +445,14 @@ function render() {
 	
 	// Slow Signs
 
-	for(var i = 0; i < 1; i++)
+	for(var i = 0; i < NUM_SLOW; i++)
 	{
 		slow_positionZ[i] += textureScrollSpeed; // slow_positionZ[i] += 0.01;
 		mvMatrix = viewMatrix;
 		mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
 		mvMatrix = mult(mvMatrix, translate(vec3(slow_positionX[i] + scrollX, 1, slow_positionZ[i])));
 		mvMatrix = mult(mvMatrix, rotate(textureDegree, (vec3(0, 1, 0))));
-		mvMatrix = mult(mvMatrix, scale(vec3(0.25, 0.25, 0.001)));
+		mvMatrix = mult(mvMatrix, scale(vec3(0.2, 0.25, 0.001)));
    		gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));		
 		
 		if (-0.15 < (slow_positionX[i] + scrollX) && (slow_positionX[i] + scrollX) < 0.15)
@@ -465,11 +460,7 @@ function render() {
 			if (-0.005 < (slow_positionZ[i]) && (slow_positionZ[i]) < 0.005+textureScrollSpeed)
 			{
 				textureScrollSpeed/=2;
-				
-				if(slowAudio.currentTime==0)
-					slowAudio.play();
-				else
-					(new Audio("./Sounds/slow.wav")).play();
+				playAudio("./Sounds/slow.wav");
 			}
 		} 
 
@@ -478,7 +469,7 @@ function render() {
 	    gl.uniform1i(uniform_sampler, 0)
 	    
 		if (slow_positionZ[i] > 1.5) {
-			slow_positionX[i] = Math.floor(Math.random()*4) + 0;
+			slow_positionX[i] = Math.floor(Math.random()*4) + Math.random();
 			slow_positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
 			slow_positionZ[i] = -7;
 		}
@@ -524,4 +515,24 @@ function render() {
     }
 
     window.requestAnimFrame(render);
+}
+
+// given specific positionX and positionZ arrays and count of some object, set random positions
+function setObjectPositions(positionX, positionZ, num) {
+    for (var i = 0; i < num; i++) {
+    	positionX[i] = Math.floor(Math.random()*4) + Math.random();
+    	positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
+    	positionZ[i] = Math.floor(Math.random()*10) + 6;
+    	positionZ[i] *= -1;
+    }
+}
+
+// play audio file found with given file path
+function playAudio(path) {
+	(new Audio(path)).play();
+}
+
+// generate a random decimal number between a and b
+function randomNumber(a, b) {
+	return Math.random()*(b-a)+a;
 }

@@ -48,7 +48,8 @@ function initTextures() {
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // parameters for scaling down
 		gl.bindTexture(gl.TEXTURE_2D, null);
 	}
-	debrisTexture.image.src = "./Images/brick.jpg";
+	debrisTexture.image.src = "./Images/asteroid.jpg";
+	//debrisTexture.image.src = "./Images/brick.jpg";
 	
 	// Heart Texture
 	heartTexture = gl.createTexture();

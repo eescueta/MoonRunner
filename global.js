@@ -5,6 +5,9 @@ var program;
 var length = 0.5;
 var time = 0.0;
 var timer = new Timer();
+var SMART_MOVEMENT = false;
+var DEBUGGING_MODE = false;
+var RESET_READY = false;
 
 var gamestart = false;
 var life = 3;
@@ -12,12 +15,6 @@ var score = 0;
 var invincibility = 0;
 var invincibilityPeriod = 45; // number of invincibility frames after being hit
 var previouslyHit;
-
-// audio
-var smashAudio = new Audio("./Sounds/smash.wav");
-var healthAudio = new Audio("./Sounds/health.wav");
-var flagAudio = new Audio("./Sounds/flag.wav");
-var slowAudio = new Audio("./Sounds/slow.wav");
 
 // navigation system variables
 var x = 0; // x-axis displacement from origin (controls right/left)
@@ -79,21 +76,28 @@ var cubePoints = [];
 var cubeNormals = [];
 var cubeUv = [];
 
-// 10 blocks continually being re-rendered
-var debris_positionX = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
-var debris_positionZ = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+//object data
 
-// 1 health pack(s) continually being re-rendered
-var health_positionX = [ 0 ];
-var health_positionZ = [ 0 ];
+// data for debris continually being re-rendered (MAX 40)
+var debris_positionX = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+var debris_positionZ = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
 
-// 2 flag(s) continually being re-rendered
-var flag_positionX = [ 0, 0 ];
-var flag_positionZ = [ 0, 0 ];
+// data for health pack(s) continually being re-rendered (MAX 10)
+var health_positionX = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+var health_positionZ = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
 
-// 1 slow sign(s) continually being re-rendered
-var slow_positionX = [ 0 ];
-var slow_positionZ = [ 0 ];
+// data for flag(s) continually being re-rendered (MAX 10)
+var flag_positionX = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+var flag_positionZ = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+
+// data for slow sign(s) continually being re-rendered (MAX 10)
+var slow_positionX = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+var slow_positionZ = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+
+var NUM_DEBRIS = 20;
+var NUM_HEALTH = 1;
+var NUM_FLAG = 2;
+var NUM_SLOW = 1;
 
 //sphere data
 var va = vec4(0.0, 0.0, -1.0,1);
