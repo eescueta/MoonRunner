@@ -63,5 +63,46 @@ function initTextures() {
 		gl.bindTexture(gl.TEXTURE_2D, null);
 	}
 	heartTexture.image.src = "./Images/heart.jpg";
+
+	// Health Texture
+	healthTexture = gl.createTexture();
+	healthTexture.image = new Image();
+	healthTexture.image.onload = function(){
+		gl.bindTexture(gl.TEXTURE_2D, healthTexture); // bind texture as current texture to use
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, healthTexture.image); // upload texture image to GPU
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); // parameters for scaling up
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // parameters for scaling down
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); // prevent wrapped s coordinates (repeating)
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); // prevent wrapped t coordinates
+		gl.bindTexture(gl.TEXTURE_2D, null);
+	}
+	healthTexture.image.src = "./Images/health.png";
 	
+	// Flag Texture
+	flagTexture = gl.createTexture();
+	flagTexture.image = new Image();
+	flagTexture.image.onload = function(){
+		gl.bindTexture(gl.TEXTURE_2D, flagTexture); // bind texture as current texture to use
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, flagTexture.image); // upload texture image to GPU
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); // parameters for scaling up
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // parameters for scaling down
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); // prevent wrapped s coordinates (repeating)
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); // prevent wrapped t coordinates
+		gl.bindTexture(gl.TEXTURE_2D, null);
+	}
+	flagTexture.image.src = "./Images/flag_inverse.png";
+	
+	// Slow Texture
+	slowTexture = gl.createTexture();
+	slowTexture.image = new Image();
+	slowTexture.image.onload = function(){
+		gl.bindTexture(gl.TEXTURE_2D, slowTexture); // bind texture as current texture to use
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, slowTexture.image); // upload texture image to GPU
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); // parameters for scaling up
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // parameters for scaling down
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); // prevent wrapped s coordinates (repeating)
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); // prevent wrapped t coordinates
+		gl.bindTexture(gl.TEXTURE_2D, null);
+	}
+	slowTexture.image.src = "./Images/slow_inverse.png";
 }

@@ -56,13 +56,6 @@ function setupWorld() {
 	// generate textures;
     initTextures();
 	
-	groundVertices = [
-		vec3(length, 0, length),
-		vec3(length, 0, -length),
-		vec3(-length, 0, -length),
-		vec3(-length, 0, length)
-	];
-	
     // generate sphere data
     setupSphere();
 	
@@ -72,7 +65,6 @@ function setupWorld() {
     // generate block data
     Cube(vertices, cubePoints, cubeNormals, cubeUv);
     
-
 	// set camera position and perspective such that both cubes are in view
     viewMatrix = lookAt(eye, at, up);
     projectionMatrix = perspective(90, 1, 0.001, 1000);
@@ -92,26 +84,62 @@ function loadWorld() {
 	life = 3;
 	textureDegree = 0;
 	textureScrollSpeed = 0.005;
+	previouslyHit = false;
 
-    // reset block positions
+    // reset debris positions
     for (var i = 0; i < 10; i++)
     {
-    	positionX[i] = Math.floor(Math.random()*4) + 0;
-    	positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
-    	positionZ[i] = Math.floor(Math.random()*10) + 6;
-    	positionZ[i] *= -1;
+    	debris_positionX[i] = Math.floor(Math.random()*4) + 0;
+    	debris_positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
+    	debris_positionZ[i] = Math.floor(Math.random()*10) + 6;
+    	debris_positionZ[i] *= -1;
     }
-    positionX[0] = 0;
-    positionZ[0] = -7;
+    debris_positionX[0] = 0;
+    debris_positionZ[0] = -7;
+    
+    // reset health positions
+    for (var i = 0; i < 1; i++)
+    {
+    	health_positionX[i] = Math.floor(Math.random()*4) + 0;
+    	health_positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
+    	health_positionZ[i] = Math.floor(Math.random()*10) + 6;
+    	health_positionZ[i] *= -1;
+    }
+    health_positionX[0] = 0;
+    health_positionZ[0] = -7;
+    
+    // reset flag positions
+    for (var i = 0; i < 2; i++)
+    {
+    	flag_positionX[i] = Math.floor(Math.random()*4) + 0;
+    	flag_positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
+    	flag_positionZ[i] = Math.floor(Math.random()*10) + 6;
+    	flag_positionZ[i] *= -1;
+    }
+    flag_positionX[0] = 0;
+    flag_positionZ[0] = -7;
+    
+    // reset slow positions
+    for (var i = 0; i < 2; i++)
+    {
+    	slow_positionX[i] = Math.floor(Math.random()*4) + 0;
+    	slow_positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
+    	slow_positionZ[i] = Math.floor(Math.random()*10) + 6;
+    	slow_positionZ[i] *= -1;
+    }
+    slow_positionX[0] = 0;
+    slow_positionZ[0] = -7;
 
 	// reset timer and enable depth buffer before rendering
-    timer.reset();	
+    timer.reset();
     gl.enable(gl.DEPTH_TEST);
     
     render();
 }
 
 function render() {
+	
+	textureScrollSpeed+=0.0001;
 	
 	if (!gamestart) {
 		$( ".interface" ).html("<img src='./Images/start.png'>");
@@ -131,6 +159,17 @@ function render() {
     {
     	score += 1;
     	invincibility++;
+    }
+
+    if(previouslyHit && invincibility <= invincibilityPeriod) {
+    	// user is invincible! show flashing screen
+    	if(document.body.style.backgroundColor=="lightblue")
+    		document.body.style.backgroundColor="white";
+    	else
+    		document.body.style.backgroundColor="lightblue";
+    }
+    else {
+   	 	document.body.style.backgroundColor="white";
     }
 
     $('#score').html(score);
@@ -166,8 +205,8 @@ function render() {
     
     // scrolling of texture
     // apply relative translational positioning to uvArray (x and y components are additively increased by those values on each render)
-    var translateX = textureScrollSpeed*Math.cos(toRadians(textureDegree));
-    var translateY = -textureScrollSpeed*Math.sin(toRadians(textureDegree));
+    var translateX = textureScrollSpeed/5*Math.cos(toRadians(textureDegree));
+    var translateY = -textureScrollSpeed/5*Math.sin(toRadians(textureDegree));
     translateUV(uvArray, translateX, translateY);
 	// apply transformation via binding
 	gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
@@ -189,7 +228,7 @@ function render() {
 	mvMatrix = viewMatrix;
 	mvMatrix = mult(mvMatrix, translate(vec3(x,y,z)));
 	mvMatrix = mult(mvMatrix, translate(vec3(0, 0.9, 0)));
-	mvMatrix = mult(mvMatrix, scale(vec3(5, 5, 5)));
+	mvMatrix = mult(mvMatrix, scale(vec3(15, 15, 15)));
     gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
 	
 	// bind to first texture (normal, nearest neighbor)
@@ -263,7 +302,7 @@ function render() {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, planetIndexBuffer);
     gl.drawElements(gl.TRIANGLES, planetIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
     
-	//Blocks
+	// Debris
 
 	positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -285,52 +324,171 @@ function render() {
 
 	for(var i = 0; i < 10; i++)
 	{
-		positionZ[i] += textureScrollSpeed; // positionZ[i] += 0.01;
+		debris_positionZ[i] += textureScrollSpeed;
 		mvMatrix = viewMatrix;
 		mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
-		mvMatrix = mult(mvMatrix, translate(vec3(positionX[i] + scrollX, 1, positionZ[i])));
+		mvMatrix = mult(mvMatrix, translate(vec3(debris_positionX[i] + scrollX, 1, debris_positionZ[i])));
 		mvMatrix = mult(mvMatrix, rotate(textureDegree, (vec3(0, 1, 0))));
+		mvMatrix = mult(mvMatrix, scale(vec3(0.25, 0.25, 0.05)));
+   		gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
 		
-		
-		if (-0.15 < (positionX[i] + scrollX) && (positionX[i] + scrollX) < 0.15)
+		if (-0.15 < (debris_positionX[i] + scrollX) && (debris_positionX[i] + scrollX) < 0.15)
 		{
-			if (-0.005 < (positionZ[i]) && (positionZ[i]) < 0.005+textureScrollSpeed)
+			if (-0.005 < (debris_positionZ[i]) && (debris_positionZ[i]) < 0.005+textureScrollSpeed)
 			{
-				if (life > 0 && invincibility > 60)
+				if (life > 0 && invincibility > invincibilityPeriod)
 				{
 					life--;
 					invincibility = 0;
+					previouslyHit = true;
 					
-					// play up to three "smash" audio files at the same time 
-					if(smash1.currentTime==0)
-						smash1.play();
-					else if(smash2.currentTime==0)
-						smash2.play();
+					if(smashAudio.currentTime==0)
+						smashAudio.play();
 					else
-						smash3.play()
-					;
+						(new Audio("./Sounds/smash.wav")).play();
+						
 				}
 			}
 		} 
-		mvMatrix = mult(mvMatrix, scale(vec3(0.25, 0.5, 0.05)));
-   		gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
 
    		gl.activeTexture(gl.TEXTURE0);
 	    gl.bindTexture(gl.TEXTURE_2D, debrisTexture);
 	    gl.uniform1i(uniform_sampler, 0)
 	    
-		if (positionZ[i] > 1.5) {
-			positionX[i] = Math.floor(Math.random()*4) + 0;
-			positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
-			positionZ[i] = -7;
+		if (debris_positionZ[i] > 1.5) {
+			debris_positionX[i] = Math.floor(Math.random()*4) + 0;
+			debris_positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
+			debris_positionZ[i] = -7;
 		}
 	    
-	    if (positionZ[i] > -5) {
+	    if (debris_positionZ[i] > -5) {
 			gl.drawArrays(gl.TRIANGLES, 0, 36);
 		}
 	}
 
+	// Health Packs
 
+	for(var i = 0; i < 1; i++)
+	{
+		health_positionZ[i] += textureScrollSpeed; 
+		mvMatrix = viewMatrix;
+		mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
+		mvMatrix = mult(mvMatrix, translate(vec3(health_positionX[i] + scrollX, 1, health_positionZ[i])));
+		mvMatrix = mult(mvMatrix, rotate(textureDegree, (vec3(0, 1, 0))));
+		mvMatrix = mult(mvMatrix, scale(vec3(0.25, 0.25, 0.05)));
+   		gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
+		
+		if (-0.15 < (health_positionX[i] + scrollX) && (health_positionX[i] + scrollX) < 0.15)
+		{
+			if (-0.005 < (health_positionZ[i]) && (health_positionZ[i]) < 0.005+textureScrollSpeed)
+			{
+				if(life<3)
+					life++;
+				
+				if(healthAudio.currentTime==0)
+					healthAudio.play();
+				else
+					(new Audio("./Sounds/health.wav")).play();
+			}
+		} 
+
+   		gl.activeTexture(gl.TEXTURE0);
+	    gl.bindTexture(gl.TEXTURE_2D, healthTexture);
+	    gl.uniform1i(uniform_sampler, 0)
+	    
+		if (health_positionZ[i] > 1.5) {
+			health_positionX[i] = Math.floor(Math.random()*4) + 0;
+			health_positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
+			health_positionZ[i] = -7;
+		}
+	    
+	    if (health_positionZ[i] > -5) {
+			gl.drawArrays(gl.TRIANGLES, 0, 36);
+		}
+	}
+	
+	// Flags
+
+	for(var i = 0; i < 2; i++)
+	{
+		flag_positionZ[i] += textureScrollSpeed; 
+		mvMatrix = viewMatrix;
+		mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
+		mvMatrix = mult(mvMatrix, translate(vec3(flag_positionX[i] + scrollX, 1, flag_positionZ[i])));
+		mvMatrix = mult(mvMatrix, rotate(textureDegree, (vec3(0, 1, 0))));
+		mvMatrix = mult(mvMatrix, scale(vec3(0.25, 0.25, 0.001)));
+   		gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));		
+		
+		if (-0.15 < (flag_positionX[i] + scrollX) && (flag_positionX[i] + scrollX) < 0.15)
+		{
+			if (-0.005 < (flag_positionZ[i]) && (flag_positionZ[i]) < 0.005+textureScrollSpeed)
+			{
+				score+=250;
+
+				if(flagAudio.currentTime==0)
+					flagAudio.play();
+				else
+					(new Audio("./Sounds/flag.wav")).play();
+				
+			}
+		} 
+
+   		gl.activeTexture(gl.TEXTURE0);
+	    gl.bindTexture(gl.TEXTURE_2D, flagTexture);
+	    gl.uniform1i(uniform_sampler, 0)
+	    
+		if (flag_positionZ[i] > 1.5) {
+			flag_positionX[i] = Math.floor(Math.random()*4) + 0;
+			flag_positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
+			flag_positionZ[i] = -7;
+		}
+	    
+	    if (flag_positionZ[i] > -5) {
+			gl.drawArrays(gl.TRIANGLES, 0, 36);
+		}
+	}
+	
+	// Slow Signs
+
+	for(var i = 0; i < 1; i++)
+	{
+		slow_positionZ[i] += textureScrollSpeed; // slow_positionZ[i] += 0.01;
+		mvMatrix = viewMatrix;
+		mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
+		mvMatrix = mult(mvMatrix, translate(vec3(slow_positionX[i] + scrollX, 1, slow_positionZ[i])));
+		mvMatrix = mult(mvMatrix, rotate(textureDegree, (vec3(0, 1, 0))));
+		mvMatrix = mult(mvMatrix, scale(vec3(0.25, 0.25, 0.001)));
+   		gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));		
+		
+		if (-0.15 < (slow_positionX[i] + scrollX) && (slow_positionX[i] + scrollX) < 0.15)
+		{
+			if (-0.005 < (slow_positionZ[i]) && (slow_positionZ[i]) < 0.005+textureScrollSpeed)
+			{
+				textureScrollSpeed/=2;
+				
+				if(slowAudio.currentTime==0)
+					slowAudio.play();
+				else
+					(new Audio("./Sounds/slow.wav")).play();
+			}
+		} 
+
+   		gl.activeTexture(gl.TEXTURE0);
+	    gl.bindTexture(gl.TEXTURE_2D, slowTexture);
+	    gl.uniform1i(uniform_sampler, 0)
+	    
+		if (slow_positionZ[i] > 1.5) {
+			slow_positionX[i] = Math.floor(Math.random()*4) + 0;
+			slow_positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
+			slow_positionZ[i] = -7;
+		}
+	    
+	    if (slow_positionZ[i] > -5) {
+			gl.drawArrays(gl.TRIANGLES, 0, 36);
+		}
+	}
+	
+	
     // Life HUD
 	
 	positionBuffer = gl.createBuffer();

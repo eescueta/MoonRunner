@@ -10,14 +10,14 @@ var gamestart = false;
 var life = 3;
 var score = 0;
 var invincibility = 0;
-
-var invincibilityPeriod = 60; // number of invincibility frames after being hit
-
+var invincibilityPeriod = 45; // number of invincibility frames after being hit
+var previouslyHit;
 
 // audio
-var smash1 = new Audio("./Sounds/smash.wav");
-var smash2 = new Audio("./Sounds/smash.wav");
-var smash3 = new Audio("./Sounds/smash.wav");
+var smashAudio = new Audio("./Sounds/smash.wav");
+var healthAudio = new Audio("./Sounds/health.wav");
+var flagAudio = new Audio("./Sounds/flag.wav");
+var slowAudio = new Audio("./Sounds/slow.wav");
 
 // navigation system variables
 var x = 0; // x-axis displacement from origin (controls right/left)
@@ -52,7 +52,13 @@ var uniform_sampler;
 var shininess = 50;
 var lightPosition = vec3(0.0, 0.0, 0.0);
 
-// slope arrays
+// ground arrays
+var groundVertices = [
+	vec3(length, 0, length),
+	vec3(length, 0, -length),
+	vec3(-length, 0, -length),
+	vec3(-length, 0, length)
+];
 var pointsArray = [];
 var normalsArray = [];
 var uvArray = [];
@@ -69,13 +75,25 @@ var vertices = [
         vec3( -length,   length, -length ), //vertex 6
         vec3( -length,  -length, -length )  //vertex 7   
     ];
-
 var cubePoints = [];
 var cubeNormals = [];
 var cubeUv = [];
 
-var positionX = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]    
-var positionZ = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]    
+// 10 blocks continually being re-rendered
+var debris_positionX = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+var debris_positionZ = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+
+// 1 health pack(s) continually being re-rendered
+var health_positionX = [ 0 ];
+var health_positionZ = [ 0 ];
+
+// 2 flag(s) continually being re-rendered
+var flag_positionX = [ 0, 0 ];
+var flag_positionZ = [ 0, 0 ];
+
+// 1 slow sign(s) continually being re-rendered
+var slow_positionX = [ 0 ];
+var slow_positionZ = [ 0 ];
 
 //sphere data
 var va = vec4(0.0, 0.0, -1.0,1);
@@ -101,6 +119,9 @@ var spaceTexture;
 var planetTexture;
 var debrisTexture;
 var heartTexture;
+var healthTexture;
+var flagTexture;
+var slowTexture;
 
 // view matrix
 var eye = vec3(0, 1, 0.001);
