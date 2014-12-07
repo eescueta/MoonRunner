@@ -6,19 +6,23 @@
 
 window.onload = init;
 
+// initializes all data (canvas, program, objects, textures, etc.) and loads game world
+// this function should only be called once at the very beginning upon the window loading
 function init() {
+	
+	setupWorld();
+	loadWorld();
+	
+}
 
-	// reset variables
-	score = 0;
-	life = 3;
-	textureDegree = 0;
-	textureScrollSpeed = 0.005;
+// generate all data (canvas, program, objects, textures, etc.) and stores in variables for future use
+function setupWorld() {
 	
 	// initialize canvas
     canvas = document.getElementById( "gl-canvas" );
     gl = WebGLUtils.setupWebGL( canvas );
     if ( !gl ) { alert( "WebGL isn't available" ); }
-
+    
 	// set up event listener on the keyboard for color cycling, toggling crosshair, navigating, and resetting
 	initEventListener();
 	
@@ -30,87 +34,66 @@ function init() {
 	// use program with shaders
 	program = initShaders( gl, "vertex-shader", "fragment-shader" );
     gl.useProgram( program );
+    
+    // enable bound shader position/normal attributes
 
+    attribute_position = gl.getAttribLocation(program, "vPosition");
+    gl.enableVertexAttribArray(attribute_position);
 
-    // Slope Texture
-	texture = gl.createTexture();
-    texture.image = new Image();
-    texture.image.onload = function(){
-		gl.bindTexture(gl.TEXTURE_2D, texture); // bind texture as current texture to use
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image); // upload texture image to GPU
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); // parameters for scaling up
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // parameters for scaling down
-		gl.bindTexture(gl.TEXTURE_2D, null);
-    }
-	//texture.image.src = "./Images/snow.jpg";
-    texture.image.src = "./Images/moonsurface2.png";
-
-    // Space Texture
-	spaceTexture = gl.createTexture();
-	spaceTexture.image = new Image();
-	spaceTexture.image.onload = function(){
-		gl.bindTexture(gl.TEXTURE_2D, spaceTexture); // bind texture as current texture to use
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, spaceTexture.image); // upload texture image to GPU
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); // parameters for scaling up
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // parameters for scaling down
-		gl.bindTexture(gl.TEXTURE_2D, null);
-    }
-	//spaceTexture.image.src = "./Images/space.jpg";
-	spaceTexture.image.src = "./Images/space2.gif";
+    attribute_normal = gl.getAttribLocation(program, "vNormal");
+    gl.enableVertexAttribArray(attribute_normal);
 	
-	// Planet Texture
-	planetTexture = gl.createTexture();
-	planetTexture.image = new Image();
-	planetTexture.image.onload = function(){
-		gl.bindTexture(gl.TEXTURE_2D, planetTexture); // bind texture as current texture to use
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, planetTexture.image); // upload texture image to GPU
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); // parameters for scaling up
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // parameters for scaling down
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); // prevent wrapped s coordinates (repeating)
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); // prevent wrapped t coordinates
-		gl.bindTexture(gl.TEXTURE_2D, null);
-    }
-	planetTexture.image.src = "./Images/planet.png";
-	
-	// Debris Texture
-	debrisTexture = gl.createTexture();
-    debrisTexture.image = new Image();
-    debrisTexture.image.onload = function(){
-		gl.bindTexture(gl.TEXTURE_2D, debrisTexture); // bind texture as current texture to use
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, debrisTexture.image); // upload texture image to GPU
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); // parameters for scaling up
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // parameters for scaling down
-		gl.bindTexture(gl.TEXTURE_2D, null);
-    }
-	debrisTexture.image.src = "./Images/brick.jpg";
+	attribute_UV = gl.getAttribLocation(program, "vTextureCoordinates");
+    gl.enableVertexAttribArray(attribute_UV);
 
-	// Heart Texture
-	heartTexture = gl.createTexture();
-    heartTexture.image = new Image();
-    heartTexture.image.onload = function(){
-		gl.bindTexture(gl.TEXTURE_2D, heartTexture); // bind texture as current texture to use
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, heartTexture.image); // upload texture image to GPU
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); // parameters for scaling up
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // parameters for scaling down
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); // prevent wrapped s coordinates (repeating)
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); // prevent wrapped t coordinates
-		gl.bindTexture(gl.TEXTURE_2D, null);
-    }
-	heartTexture.image.src = "./Images/heart.jpg";
+	// set variables for all the other uniform variables in shader
+    uniform_mvMatrix = gl.getUniformLocation(program, "mvMatrix");
+    uniform_pMatrix = gl.getUniformLocation(program, "pMatrix");
+    uniform_lightPosition = gl.getUniformLocation(program, "lightPosition");
+    uniform_shininess = gl.getUniformLocation(program, "shininess");
+	uniform_sampler = gl.getUniformLocation(program, "uSampler");
 	
-	slopeVertices = [
+	// generate textures;
+    initTextures();
+	
+	groundVertices = [
 		vec3(length, 0, length),
 		vec3(length, 0, -length),
 		vec3(-length, 0, -length),
 		vec3(-length, 0, length)
 	];
 	
-	// generate slope arrays
-    slope(slopeVertices, pointsArray, normalsArray, uvArray);	
+    // generate sphere data
+    setupSphere();
+	
+	// generate ground data
+    ground(groundVertices, pointsArray, normalsArray, uvArray);	
 
-    // generate blocks
+    // generate block data
     Cube(vertices, cubePoints, cubeNormals, cubeUv);
+    
 
+	// set camera position and perspective such that both cubes are in view
+    viewMatrix = lookAt(eye, at, up);
+    projectionMatrix = perspective(90, 1, 0.001, 1000);
+
+	// set light position
+	mvLightMatrix = viewMatrix;
+	uniform_mvLightMatrix = gl.getUniformLocation(program, "mvLightMatrix");
+	gl.uniformMatrix4fv(uniform_mvLightMatrix, false, flatten(mvLightMatrix));
+    
+}
+
+// reset positioning and player progress, then render world (call this function to reset after player loses)
+function loadWorld() {
+    
+	// reset variables
+	score = 0;
+	life = 3;
+	textureDegree = 0;
+	textureScrollSpeed = 0.005;
+
+    // reset block positions
     for (var i = 0; i < 10; i++)
     {
     	positionX[i] = Math.floor(Math.random()*4) + 0;
@@ -121,68 +104,6 @@ function init() {
     positionX[0] = 0;
     positionZ[0] = -7;
 
-    // generate sphere
-    setupSphere();
-    
-    /*
-    
-	// bind and set up position buffer
-    positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(pointsArray), gl.STATIC_DRAW);
-    
-	// bind and set up normal buffer
-	normalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(normalsArray), gl.STATIC_DRAW);
-	
-	// bind and set up texture coordinate buffer
-	uvBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(uvArray), gl.STATIC_DRAW);
-
-    */
-	
-// enable bound shader position/normal attributes
-	
-    attribute_position = gl.getAttribLocation(program, "vPosition");
-    gl.enableVertexAttribArray(attribute_position);
-
-    attribute_normal = gl.getAttribLocation(program, "vNormal");
-    gl.enableVertexAttribArray(attribute_normal);
-	
-	attribute_UV = gl.getAttribLocation(program, "vTextureCoordinates");
-    gl.enableVertexAttribArray(attribute_UV);
-
-    /*
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.vertexAttribPointer(attribute_position, 3, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    gl.vertexAttribPointer(attribute_normal, 3, gl.FLOAT, false, 0, 0);	
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
-    gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
-
-    */
-	
-	// set variables for all the other uniform variables in shader
-    uniform_mvMatrix = gl.getUniformLocation(program, "mvMatrix");
-    uniform_pMatrix = gl.getUniformLocation(program, "pMatrix");
-    uniform_lightPosition = gl.getUniformLocation(program, "lightPosition");
-    uniform_shininess = gl.getUniformLocation(program, "shininess");
-	uniform_sampler = gl.getUniformLocation(program, "uSampler");
-	
-	// set camera position and perspective such that both cubes are in view
-    viewMatrix = lookAt(eye, at, up);
-    projectionMatrix = perspective(90, 1, 0.001, 1000);
-
-	// set light position
-	mvLightMatrix = viewMatrix;
-	uniform_mvLightMatrix = gl.getUniformLocation(program, "mvLightMatrix");
-	gl.uniformMatrix4fv(uniform_mvLightMatrix, false, flatten(mvLightMatrix));
-	
 	// reset timer and enable depth buffer before rendering
     timer.reset();	
     gl.enable(gl.DEPTH_TEST);
@@ -198,7 +119,6 @@ function render() {
 	}
 	
 	if(life<=0) {
-		console.log("Game over!");
 		$( ".interface" ).html("<img src='./Images/gameover.png'>");
 		return;
 	}
@@ -224,7 +144,7 @@ function render() {
 	gl.uniform3fv(uniform_lightPosition, flatten(lightPosition));
     gl.uniform1f(uniform_shininess, shininess);
 
-    // Slope
+    // Ground
 
     positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -274,37 +194,33 @@ function render() {
 	
 	// bind to first texture (normal, nearest neighbor)
 	gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.bindTexture(gl.TEXTURE_2D, groundTexture);
     gl.uniform1i(uniform_sampler, 0)
 
 	gl.drawArrays(gl.TRIANGLES, 0, 6);
 
     // Outer Space
+    
 	positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(cubePoints), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    attribute_position = gl.getAttribLocation(program, "vPosition");
     gl.enableVertexAttribArray(attribute_position);
     gl.vertexAttribPointer(attribute_position, 3, gl.FLOAT, false, 0, 0);
 
     normalBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeNormals), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    attribute_normal = gl.getAttribLocation(program, "vNormal");
     gl.enableVertexAttribArray(attribute_normal);
     gl.vertexAttribPointer(attribute_normal, 3, gl.FLOAT, false, 0, 0);	
     
     uvBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeUv), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
-    attribute_UV = gl.getAttribLocation(program, "vTextureCoordinates");
     
     gl.enableVertexAttribArray(attribute_UV);
     gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
-	mvMatrix = viewMatrix;
+	
+    mvMatrix = viewMatrix;
 	mvMatrix = mult(mvMatrix, rotate(textureDegree,vec3(0, 1, 0)));
 	mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
 	mvMatrix = mult(mvMatrix, translate(vec3(0, 1.5, 0)));
@@ -335,6 +251,8 @@ function render() {
 
 	// set model view matrix for planet
 	mvMatrix = viewMatrix;
+	mvMatrix = mult(mvMatrix, rotate(textureDegree,vec3(0, 1, 0)));
+	mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
 	mvMatrix = mult(mvMatrix, translate(vec3(5, 0, 0)));
 	mvMatrix = mult(mvMatrix, rotate(time * 3, [ 1, 0, 0 ]));
 	mvMatrix = mult(mvMatrix, translate(vec3(0, 0, -10)));
@@ -350,35 +268,26 @@ function render() {
 	positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(cubePoints), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    attribute_position = gl.getAttribLocation(program, "vPosition");
     gl.enableVertexAttribArray(attribute_position);
     gl.vertexAttribPointer(attribute_position, 3, gl.FLOAT, false, 0, 0);
 
     normalBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeNormals), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    attribute_normal = gl.getAttribLocation(program, "vNormal");
     gl.enableVertexAttribArray(attribute_normal);
     gl.vertexAttribPointer(attribute_normal, 3, gl.FLOAT, false, 0, 0);	
 
     uvBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeUv), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
-    attribute_UV = gl.getAttribLocation(program, "vTextureCoordinates");
     gl.enableVertexAttribArray(attribute_UV);
     gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
 
-    // TODO: prevent walls from stacking (subtracts two lives)
 	for(var i = 0; i < 10; i++)
 	{
-		//positionZ[i] += 0.01;
-		positionZ[i] += textureScrollSpeed;
+		positionZ[i] += textureScrollSpeed; // positionZ[i] += 0.01;
 		mvMatrix = viewMatrix;
 		mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
-		//mvMatrix = mult(mvMatrix, translate(vec3(positionX[i], 1, positionZ[i])));
 		mvMatrix = mult(mvMatrix, translate(vec3(positionX[i] + scrollX, 1, positionZ[i])));
 		mvMatrix = mult(mvMatrix, rotate(textureDegree, (vec3(0, 1, 0))));
 		
@@ -427,24 +336,18 @@ function render() {
 	positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(cubePoints), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    attribute_position = gl.getAttribLocation(program, "vPosition");
     gl.enableVertexAttribArray(attribute_position);
     gl.vertexAttribPointer(attribute_position, 3, gl.FLOAT, false, 0, 0);
 
     normalBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeNormals), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    attribute_normal = gl.getAttribLocation(program, "vNormal");
     gl.enableVertexAttribArray(attribute_normal);
     gl.vertexAttribPointer(attribute_normal, 3, gl.FLOAT, false, 0, 0);	
 
     uvBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeUv), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
-    attribute_UV = gl.getAttribLocation(program, "vTextureCoordinates");
     gl.enableVertexAttribArray(attribute_UV);
     gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
 

@@ -88,7 +88,7 @@ var planetUv;
 var planetIndexBuffer;
 var planetIndexData;
 
-// Heart position
+// heart position
 var heartPositions = [
 	vec3(-4.5, 4.5, 0), 
     vec3(-3.5, 4.5, 0), 
@@ -96,7 +96,11 @@ var heartPositions = [
 ];
 
 // texture
-var texture;
+var groundTexture;
+var spaceTexture;
+var planetTexture;
+var debrisTexture;
+var heartTexture;
 
 // view matrix
 var eye = vec3(0, 1, 0.001);

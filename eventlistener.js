@@ -1,7 +1,3 @@
-/**
- * 
- */
-
 function initEventListener() {
 	document.onkeydown = function(e) {
 		e = e || window.event;
@@ -54,9 +50,9 @@ function initEventListener() {
 		}
 		else if(e.keyCode===82) { // "r" (reset the game)
 			$( ".interface" ).html("");
-			init();
+			loadWorld();
 		}
-		else if(e.keyCode===80) { // "r" (reset the game)
+		else if(e.keyCode===80) { // "p" (start the game)
 			if (!gamestart) {
 				$( ".interface" ).html("");
 				gamestart = true;

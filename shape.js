@@ -1,4 +1,4 @@
-function slope(vertices, points, normals, uv) {
+function ground(vertices, points, normals, uv) {
 	normals.push(vec3(0, 1, 0));
 	normals.push(vec3(0, 1, 0));
 	normals.push(vec3(0, 1, 0));
