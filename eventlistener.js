@@ -62,10 +62,10 @@ function initEventListener() {
 				y+=0.1;
 				scrollZ -= 0.1;
 			}
-			else if(e.keyCode===73) { // "i" (speed up)
+			else if(e.keyCode===74) { // "j" (speed up)
 				textureScrollSpeed+=0.0005;
 			}
-			else if(e.keyCode===79) { // "o" (slow down)
+			else if(e.keyCode===75) { // "k" (slow down)
 				if(textureScrollSpeed>=0.0005)
 					textureScrollSpeed-=0.0005;
 			}
@@ -92,13 +92,21 @@ function initEventListener() {
 			}
 		}
 		
-		if(e.keyCode===82) { // "r" (reset the game)
+		if(RESET_READY && e.keyCode===84) { // "t" (go back to front page)
+			// instead of resetting the game, user can go to title page
+			// this sets gamestart to false, removes the reset option, and inits the world
+			$( ".interface" ).html("<img src='./Images/start.png'>");
+			console.log("TEST");
+			init();
+			setCaption("");
+			gamestart = false;
+			RESET_READY = false;
+		}
+		else if(RESET_READY && e.keyCode===82) { // "r" (reset the game)
 			// reset the game using loadWorld only if the player is on the game over screen
-			if(RESET_READY) {
-				$( ".interface" ).html("");
-				loadWorld();
-				RESET_READY = false;
-			}
+			$( ".interface" ).html("");
+			loadWorld();
+			RESET_READY = false;
 		}
 		else if(e.keyCode===80) { // "p" (start the game)
 			// start the game using init only if the player is on the game start screen
@@ -107,6 +115,13 @@ function initEventListener() {
 				gamestart = true;
 				init();
 			}
+		}
+		else if(!gamestart&& e.keyCode===73) { // "i" (toggle instructions before game starts)
+			instructionsOn = !instructionsOn;
+			if (instructionsOn)
+				$( ".interface" ).html("<img src='./Images/instructions.png'>");
+			else
+				$( ".interface" ).html("<img src='./Images/start.png'>");
 		}
 	};
 }

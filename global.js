@@ -18,6 +18,7 @@
 	var NUM_SLOW = 1; 			// (MAX: 10)
 	var FLAG_NUM_POINTS = 250;
 	var MAX_TOTAL_HEALTH = 3;	// incrementing this beyond 3 will require heartPositions to be modified
+	var CAPTION_TIME_LENGTH = 2000; // in milliseconds
 	
 	// invincibility frames
 	var BORDER_COLOR_INVINCIBLE = "rgb(102, 178, 255)";
@@ -25,11 +26,13 @@
 
 	// player progress
 	var gamestart = false;
+	var instructionsOn = false;
 	var life = 3;
 	var score = 0;
 	var invincibility = 0;
 	var invincibilityPeriod = 45; // number of invincibility frames after being hit
 	var previouslyHit;
+	var captionTimer = CAPTION_TIME_LENGTH;
 
 // NAVIGATION SYSTEM:
 	var x = 0;
