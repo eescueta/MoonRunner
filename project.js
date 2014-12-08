@@ -4,18 +4,16 @@
  * 
  */
 
-window.onload = init;
-
 // initializes all data (canvas, program, objects, textures, etc.) and loads game world
 // this function should only be called once at the very beginning upon the window loading
+window.onload = init;
 function init() {
-	
 	setupWorld();
 	loadWorld();
-	
 }
 
 // generate all data (canvas, program, objects, textures, etc.) and stores in variables for future use
+// this function should only be called once when the window loads in the function init()
 function setupWorld() {
 	
 	// initialize canvas
@@ -23,26 +21,27 @@ function setupWorld() {
     gl = WebGLUtils.setupWebGL( canvas );
     if ( !gl ) { alert( "WebGL isn't available" ); }
     
-	// set up event listener on the keyboard for color cycling, toggling crosshair, navigating, and resetting
+	// set up event listener on the keyboard
 	initEventListener();
 	
-	// set up world, specifying the viewport, enabling depth buffer, and clearing color buffer
+	// set up world (viewport, enabling death buffer, clearing color buffer)
     gl.viewport( 0, 0, canvas.width, canvas.height );
     gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
     gl.enable(gl.DEPTH_TEST);
 	
-	// use program with shaders
+	// associate program with WebGl canvas
 	program = initShaders( gl, "vertex-shader", "fragment-shader" );
     gl.useProgram( program );
     
-    // enable bound shader position/normal attributes
-
+    // enable bound program attributes (position/points)
     attribute_position = gl.getAttribLocation(program, "vPosition");
     gl.enableVertexAttribArray(attribute_position);
 
+    // enable bound program attributes (normals)
     attribute_normal = gl.getAttribLocation(program, "vNormal");
     gl.enableVertexAttribArray(attribute_normal);
 	
+    // enable bound program attributes (uv/texture coordinates)
 	attribute_UV = gl.getAttribLocation(program, "vTextureCoordinates");
     gl.enableVertexAttribArray(attribute_UV);
 
@@ -60,10 +59,10 @@ function setupWorld() {
     setupSphere();
 	
 	// generate ground data
-    ground(groundVertices, pointsArray, normalsArray, uvArray);	
+    ground(groundVertices, planePoints, planeNormals, planeUv);	
 
     // generate block data
-    Cube(vertices, cubePoints, cubeNormals, cubeUv);
+    cube(cubeVertices, cubePoints, cubeNormals, cubeUv);
     
 	// set camera position and perspective such that both cubes are in view
     viewMatrix = lookAt(eye, at, up);
@@ -76,10 +75,11 @@ function setupWorld() {
     
 }
 
-// reset positioning and player progress, then render world (call this function to reset after player loses)
+// reset positioning and player progress, then render world
+// call this function each time for resetting after player loses
 function loadWorld() {
     
-	// reset variables
+	// reset game variables for player progress
 	score = 0;
 	life = 3;
 	textureDegree = 0;
@@ -102,18 +102,22 @@ function loadWorld() {
     timer.reset();
     gl.enable(gl.DEPTH_TEST);
     
+    // render!
     render();
 }
 
 function render() {
 	
+	// increment player speed on each frame
 	textureScrollSpeed+=0.0001;
 	
+	// if game has not started, show start screen and return from rendering
 	if (!gamestart) {
 		$( ".interface" ).html("<img src='./Images/start.png'>");
 		return;
 	}
 	
+	// if life is 0, show game over screen, return from rendering, and allow player to reset game
 	if(life<=0) {
 		$( ".interface" ).html("<img src='./Images/gameover.png'>");
 		RESET_READY = true;
@@ -123,15 +127,14 @@ function render() {
 	// clear buffers and update time based on timer
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     time += timer.getElapsedTime() / 1000;
-    // scrollZ += 0.01;
-    if (life > 0)
-    {
+    
+    // if player is still alive, increment score and invincibility frame count
+    if (life > 0) {
     	score += 1;
     	invincibility++;
     }
-
     
-    // if user is invincible, flash the border between two colors
+    // if user is currently invincible, flash the canvas' border between two provided colors
     if(previouslyHit && invincibility <= invincibilityPeriod) {
         if($("#canvas-wrap").css("border-top-color")===BORDER_COLOR_INVINCIBLE)
         	$("#canvas-wrap").css("border-color", BORDER_COLOR_NORMAL);
@@ -142,23 +145,9 @@ function render() {
     	$("#canvas-wrap").css("border-color", BORDER_COLOR_NORMAL);
     }
     
-    /*
-    if(previouslyHit && invincibility <= invincibilityPeriod) {
-
-    	if(document.body.style.backgroundColor=="lightblue")
-    		document.body.style.backgroundColor="white";
-    	else
-    		document.body.style.backgroundColor="lightblue";
-    }
-    else {
-   	 	document.body.style.backgroundColor="white";
-    }
-    */
-
+    // update score display
     $('#score').html(score);
 	
-	viewMatrix = lookAt(eye, at, up);
-
 	// set projection matrix
 	gl.uniformMatrix4fv(uniform_pMatrix, false, flatten(projectionMatrix));
 	
@@ -166,46 +155,23 @@ function render() {
 	gl.uniform3fv(uniform_lightPosition, flatten(lightPosition));
     gl.uniform1f(uniform_shininess, shininess);
 
-    // Ground
-
-    positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(pointsArray), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.vertexAttribPointer(attribute_position, 3, gl.FLOAT, false, 0, 0);
-
-    normalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(normalsArray), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    gl.vertexAttribPointer(attribute_normal, 3, gl.FLOAT, false, 0, 0);	
-
-    uvBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(uvArray), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
-    gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
+// BEGIN: RENDER GROUND
+    // use plane data and set texture
+    switchToPlaneBuffers();
+    setTexture(groundTexture);
     
-    // scrolling of texture
-    // apply relative translational positioning to uvArray (x and y components are additively increased by those values on each render)
+    // scroll texture using relative translation, where x, y components are additively incremented
     var translateX = textureScrollSpeed/5*Math.cos(toRadians(textureDegree));
     var translateY = -textureScrollSpeed/5*Math.sin(toRadians(textureDegree));
-    translateUV(uvArray, translateX, translateY);
-	// apply transformation via binding
-	gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, flatten(uvArray), gl.STATIC_DRAW);
+    translateUV(planeUv, translateX, translateY);
 
-    // rotation of texture
-	var uvArrayTemp = uvArray.slice(); // make a copy of uvArray
-	// apply absolute rotational positioning to copy of uvArray (x and y components of uvArrayTemp are calculated anew each time, from 0 degrees to time*360 degrees)
-	rotateUV(uvArrayTemp, textureDegree);
-	// apply transformation via binding
-	gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, flatten(uvArrayTemp), gl.STATIC_DRAW);
+    // rotate texture with absolute rotation, where x, y components of temporary uv buffer are rendered from 0 degrees to time*degree
+	var planeUvTemp = planeUv.slice(); // make a copy of the actual uv buffer (planeUv)
+	rotateUV(planeUvTemp, textureDegree);
 
-	// bind the normal texture coordinates
-    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
-    gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);
+	// bind buffers to apply texture scrolling/rotation 
+	gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, flatten(planeUvTemp), gl.STATIC_DRAW);
 
 	// set up model-view matrix and bind
 	mvMatrix = viewMatrix;
@@ -213,65 +179,35 @@ function render() {
 	mvMatrix = mult(mvMatrix, translate(vec3(0, 0.9, 0)));
 	mvMatrix = mult(mvMatrix, scale(vec3(15, 15, 15)));
     gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
-	
-	// bind to first texture (normal, nearest neighbor)
-	gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, groundTexture);
-    gl.uniform1i(uniform_sampler, 0)
 
+    // draw actual shapes
 	gl.drawArrays(gl.TRIANGLES, 0, 6);
+// END: RENDER GROUND
 
-    // Outer Space
-    
-	positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubePoints), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(attribute_position);
-    gl.vertexAttribPointer(attribute_position, 3, gl.FLOAT, false, 0, 0);
-
-    normalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeNormals), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(attribute_normal);
-    gl.vertexAttribPointer(attribute_normal, 3, gl.FLOAT, false, 0, 0);	
-    
-    uvBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeUv), gl.STATIC_DRAW);
-    
-    gl.enableVertexAttribArray(attribute_UV);
-    gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
+// BEGIN: RENDER OUTER SPACE
+	// use cube data and set texture
+    switchToCubeBuffers();
+	setTexture(spaceTexture);
 	
+	// set up model-view matrix and bind
     mvMatrix = viewMatrix;
 	mvMatrix = mult(mvMatrix, rotate(textureDegree,vec3(0, 1, 0)));
 	mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
 	mvMatrix = mult(mvMatrix, translate(vec3(0, 1.5, 0)));
-	mvMatrix = mult(mvMatrix, rotate(time*0.75,vec3(1, 0, 0))); // TODO: sync rotation speed here with skid speed
+	mvMatrix = mult(mvMatrix, rotate(time*0.75,vec3(1, 0, 0)));
 	mvMatrix = mult(mvMatrix, scale(vec3(20, 20, 20)));
 	gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
 
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, spaceTexture);
-    gl.uniform1i(uniform_sampler, 0)
-	
-    gl.drawArrays(gl.TRIANGLES, 0, 36);
+	// draw actual shapes
+	gl.drawArrays(gl.TRIANGLES, 0, 36);
+// END: RENDER OUTER SPACE
     
-    // Planet
+// BEGIN: RENDER EARTH
+	// use sphere data and set texture
+	switchToSphereBuffers();
+	setTexture(planetTexture);
 
-	gl.activeTexture(gl.TEXTURE0);
-	gl.bindTexture(gl.TEXTURE_2D, planetTexture);
-	gl.uniform1i(uniform_sampler, 0)
-	
-    gl.bindBuffer(gl.ARRAY_BUFFER, planetPoints);
-    gl.vertexAttribPointer(attribute_position, planetPoints.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, planetUv);
-    gl.vertexAttribPointer(attribute_UV, planetUv.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, planetNormals);
-    gl.vertexAttribPointer(attribute_normal, planetNormals.itemSize, gl.FLOAT, false, 0, 0);
-
-	// set model view matrix for planet
+	// set up model-view matrix and bind
 	mvMatrix = viewMatrix;
 	mvMatrix = mult(mvMatrix, rotate(textureDegree,vec3(0, 1, 0)));
 	mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
@@ -282,112 +218,70 @@ function render() {
 	mvMatrix = mult(mvMatrix, scale(vec3(0.5, 0.5, .5)));
 	gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
     
+	// draw actual shapes (alternate method for spheres)
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, planetIndexBuffer);
     gl.drawElements(gl.TRIANGLES, planetIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+// END: RENDER EARTH
+
+// BEGIN: RENDER DEBRIS
+    // use sphere data and set texture
+    setTexture(debrisTexture);
     
-	// Debris
-
-    /*
-	positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubePoints), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(attribute_position);
-    gl.vertexAttribPointer(attribute_position, 3, gl.FLOAT, false, 0, 0);
-
-    normalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeNormals), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(attribute_normal);
-    gl.vertexAttribPointer(attribute_normal, 3, gl.FLOAT, false, 0, 0);	
-
-    uvBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeUv), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(attribute_UV);
-    gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
-    */
-    
-    gl.bindBuffer(gl.ARRAY_BUFFER, planetPoints);
-    gl.vertexAttribPointer(attribute_position, planetPoints.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, planetUv);
-    gl.vertexAttribPointer(attribute_UV, planetUv.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, planetNormals);
-    gl.vertexAttribPointer(attribute_normal, planetNormals.itemSize, gl.FLOAT, false, 0, 0);
-    
+    // for each object
 	for(var i = 0; i < NUM_DEBRIS; i++)
 	{
+		// set object to move with ground
 		debris_positionZ[i] += textureScrollSpeed;
+		
+		// set up model-view matrix and bind
 		mvMatrix = viewMatrix;
 		mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
 		mvMatrix = mult(mvMatrix, translate(vec3(debris_positionX[i] + scrollX, 1, debris_positionZ[i])));
 		mvMatrix = mult(mvMatrix, rotate(textureDegree, (vec3(0, 1, 0))));
-		//mvMatrix = mult(mvMatrix, scale(vec3(0.25, 0.25, 0.05))); // for cube debris
-		mvMatrix = mult(mvMatrix, scale(vec3(0.075, 0.09, 0.05))); // for sphere debris
+		mvMatrix = mult(mvMatrix, scale(vec3(0.075, 0.09, 0.05)));
    		gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
-		
-		if (-0.15 < (debris_positionX[i] + scrollX) && (debris_positionX[i] + scrollX) < 0.15)
-		{
-			if (-0.005 < (debris_positionZ[i]) && (debris_positionZ[i]) < 0.005+textureScrollSpeed)
-			{
-				if (life > 0 && invincibility > invincibilityPeriod)
-				{
+
+   		// if player hits object, subtract life count, reset invincibility frames and play sound
+		if (-0.15 < (debris_positionX[i] + scrollX) && (debris_positionX[i] + scrollX) < 0.15) {
+			if (-0.005 < (debris_positionZ[i]) && (debris_positionZ[i]) < 0.005+textureScrollSpeed) {
+				if (life > 0 && invincibility > invincibilityPeriod) {
 					life--;
 					invincibility = 0;
 					previouslyHit = true;
-					
 					playAudio("./Sounds/smash.wav");
-						
 				}
 			}
 		} 
-
-   		gl.activeTexture(gl.TEXTURE0);
-	    gl.bindTexture(gl.TEXTURE_2D, debrisTexture);
-	    gl.uniform1i(uniform_sampler, 0)
-	    
+		
+		// if object goes out of view, reset its positioning
 		if (debris_positionZ[i] > 1.5) {
 			debris_positionX[i] = Math.floor(Math.random()*4) + Math.random();
 			debris_positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
 			debris_positionZ[i] = -7;
 		}
 	    
+		// draw object if within view
 	    if (debris_positionZ[i] > -5) {
-	    	//gl.drawArrays(gl.TRIANGLES, 0, 36); // for cube debris
-	    	
-	    	// for sphere debris
 	        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, planetIndexBuffer);
 	        gl.drawElements(gl.TRIANGLES, planetIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 			
 		}
 	}
-
-	// Switch back to cube data for other objects
+// END: RENDER DEBRIS
 	
-	positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubePoints), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(attribute_position);
-    gl.vertexAttribPointer(attribute_position, 3, gl.FLOAT, false, 0, 0);
-
-    normalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeNormals), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(attribute_normal);
-    gl.vertexAttribPointer(attribute_normal, 3, gl.FLOAT, false, 0, 0);	
-
-    uvBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeUv), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(attribute_UV);
-    gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
+	// switch to cube data used by all the other objects
+	switchToCubeBuffers();
 	
-	// Health Packs
-
-	for(var i = 0; i < NUM_HEALTH; i++)
-	{
-		health_positionZ[i] += textureScrollSpeed; 
+// BEGIN: RENDER HEALTH PACKS
+	// use cube data and set texture
+	setTexture(healthTexture);
+	
+	// for each object
+	for(var i = 0; i < NUM_HEALTH; i++) {	
+		// set object to move with ground
+		health_positionZ[i] += textureScrollSpeed;
+		
+		// set up model-view matrix and bind
 		mvMatrix = viewMatrix;
 		mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
 		mvMatrix = mult(mvMatrix, translate(vec3(health_positionX[i] + scrollX, 1, health_positionZ[i])));
@@ -395,36 +289,38 @@ function render() {
 		mvMatrix = mult(mvMatrix, scale(vec3(0.2, 0.25, 0.15)));
    		gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
 		
-		if (-0.15 < (health_positionX[i] + scrollX) && (health_positionX[i] + scrollX) < 0.15)
-		{
-			if (-0.005 < (health_positionZ[i]) && (health_positionZ[i]) < 0.005+textureScrollSpeed)
-			{
-				if(life<3)
+   		// if player hits object and has fewer than the max number of hearts, increment life count and play sound
+		if (-0.15 < (health_positionX[i] + scrollX) && (health_positionX[i] + scrollX) < 0.15) {
+			if (-0.005 < (health_positionZ[i]) && (health_positionZ[i]) < 0.005+textureScrollSpeed) {
+				if(life < MAX_TOTAL_HEALTH)
 					life++;
 				playAudio("./Sounds/health.wav");
 			}
 		} 
 
-   		gl.activeTexture(gl.TEXTURE0);
-	    gl.bindTexture(gl.TEXTURE_2D, healthTexture);
-	    gl.uniform1i(uniform_sampler, 0)
-	    
+		// if object goes out of view, reset its positioning
 		if (health_positionZ[i] > 1.5) {
 			health_positionX[i] = Math.floor(Math.random()*4) + Math.random();
 			health_positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
 			health_positionZ[i] = -7;
 		}
-	    
-	    if (health_positionZ[i] > -5) {
+		
+		// draw object if within view
+	    if (health_positionZ[i] > -5)
 			gl.drawArrays(gl.TRIANGLES, 0, 36);
-		}
 	}
-	
-	// Flags
+// END: RENDER HEALTH PACKS
 
-	for(var i = 0; i < NUM_FLAG; i++)
-	{
-		flag_positionZ[i] += textureScrollSpeed; 
+// BEGIN: RENDER FLAGS
+	// use cube data and set texture
+	setTexture(flagTexture);
+	
+	// for each object
+	for(var i = 0; i < NUM_FLAG; i++) {
+		// set object to move with ground
+		flag_positionZ[i] += textureScrollSpeed;
+		
+		// set up model-view matrix and bind
 		mvMatrix = viewMatrix;
 		mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
 		mvMatrix = mult(mvMatrix, translate(vec3(flag_positionX[i] + scrollX, 1, flag_positionZ[i])));
@@ -432,36 +328,38 @@ function render() {
 		mvMatrix = mult(mvMatrix, scale(vec3(0.25, 0.25, 0.001)));
    		gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));		
 		
-		if (-0.15 < (flag_positionX[i] + scrollX) && (flag_positionX[i] + scrollX) < 0.15)
-		{
-			if (-0.005 < (flag_positionZ[i]) && (flag_positionZ[i]) < 0.005+textureScrollSpeed)
-			{
-				score+=250;
+   		// if player hits object add points to score count and play sound
+		if (-0.15 < (flag_positionX[i] + scrollX) && (flag_positionX[i] + scrollX) < 0.15) {
+			if (-0.005 < (flag_positionZ[i]) && (flag_positionZ[i]) < 0.005+textureScrollSpeed) {
+				score += FLAG_NUM_POINTS;
 				playAudio("./Sounds/flag.wav");
-				
 			}
 		} 
 
-   		gl.activeTexture(gl.TEXTURE0);
-	    gl.bindTexture(gl.TEXTURE_2D, flagTexture);
-	    gl.uniform1i(uniform_sampler, 0)
-	    
+		// if object goes out of view, reset its positioning
 		if (flag_positionZ[i] > 1.5) {
 			flag_positionX[i] = Math.floor(Math.random()*4) + Math.random();
 			flag_positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
 			flag_positionZ[i] = -7;
 		}
-	    
-	    if (flag_positionZ[i] > -5) {
+
+		// draw object if within view
+	    if (flag_positionZ[i] > -5)
 			gl.drawArrays(gl.TRIANGLES, 0, 36);
-		}
 	}
 	
-	// Slow Signs
+// END: RENDER FLAGS
 
-	for(var i = 0; i < NUM_SLOW; i++)
-	{
-		slow_positionZ[i] += textureScrollSpeed; // slow_positionZ[i] += 0.01;
+// BEGIN: RENDER "SLOW" SIGNS
+	// use cube data and set texture
+	setTexture(slowTexture);
+	
+	// for each object
+	for(var i = 0; i < NUM_SLOW; i++) {
+		// set object to move with ground
+		slow_positionZ[i] += textureScrollSpeed;
+
+		// set up model-view matrix and bind
 		mvMatrix = viewMatrix;
 		mvMatrix = mult(mvMatrix, translate(vec3(x, y, z)));
 		mvMatrix = mult(mvMatrix, translate(vec3(slow_positionX[i] + scrollX, 1, slow_positionZ[i])));
@@ -469,69 +367,46 @@ function render() {
 		mvMatrix = mult(mvMatrix, scale(vec3(0.2, 0.25, 0.001)));
    		gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));		
 		
-		if (-0.15 < (slow_positionX[i] + scrollX) && (slow_positionX[i] + scrollX) < 0.15)
-		{
-			if (-0.005 < (slow_positionZ[i]) && (slow_positionZ[i]) < 0.005+textureScrollSpeed)
-			{
+   		// if player hits object, cut movement speed in half and play sound
+		if (-0.15 < (slow_positionX[i] + scrollX) && (slow_positionX[i] + scrollX) < 0.15) {
+			if (-0.005 < (slow_positionZ[i]) && (slow_positionZ[i]) < 0.005+textureScrollSpeed) {
 				textureScrollSpeed/=2;
 				playAudio("./Sounds/slow.wav");
 			}
 		} 
-
-   		gl.activeTexture(gl.TEXTURE0);
-	    gl.bindTexture(gl.TEXTURE_2D, slowTexture);
-	    gl.uniform1i(uniform_sampler, 0)
 	    
+		// if object goes out of view, reset its positioning
 		if (slow_positionZ[i] > 1.5) {
 			slow_positionX[i] = Math.floor(Math.random()*4) + Math.random();
 			slow_positionX[i] *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
 			slow_positionZ[i] = -7;
 		}
 	    
-	    if (slow_positionZ[i] > -5) {
+		// draw object if within view
+	    if (slow_positionZ[i] > -5)
 			gl.drawArrays(gl.TRIANGLES, 0, 36);
-		}
 	}
+// END: RENDER "SLOW" SIGNS
 	
-	
-    // Life HUD
-	
-	positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubePoints), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(attribute_position);
-    gl.vertexAttribPointer(attribute_position, 3, gl.FLOAT, false, 0, 0);
+// BEGIN: RENDER LIFE BAR HUD
+	// use cube data and set texture
+	setTexture(heartTexture);
 
-    normalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeNormals), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(attribute_normal);
-    gl.vertexAttribPointer(attribute_normal, 3, gl.FLOAT, false, 0, 0);	
-
-    uvBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeUv), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(attribute_UV);
-    gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
-
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, heartTexture);
-    gl.uniform1i(uniform_sampler, 0)
-
+	// for each heart, set up orthographic projection and model-view matrix and bind/draw
     for (var i = 0; i < life; i++) {
-	    orthoProjectionMatrix = ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+    	orthoProjectionMatrix = ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
 	    mvMatrix = orthoProjectionMatrix;
 	    mvMatrix = mult(mvMatrix, scale(vec3(0.1, 0.1, 1)));
-	    // mvMatrix = mult(mvMatrix, translate(vec3(-4.5, 4.5, 0)));
 	    mvMatrix = mult(mvMatrix, translate(heartPositions[i]));
 	    gl.uniformMatrix4fv(uniform_mvMatrix, false, flatten(mvMatrix));
     	gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
-
+// END: RENDER LIFE BAR HUD
+    
     window.requestAnimFrame(render);
 }
 
-// given specific positionX and positionZ arrays and count of some object, set random positions
+// given a set of positionX and positionZ arrays and number of some object, assign each object random positions
 function setObjectPositions(positionX, positionZ, num) {
     for (var i = 0; i < num; i++) {
     	positionX[i] = Math.floor(Math.random()*4) + Math.random();
@@ -549,4 +424,73 @@ function playAudio(path) {
 // generate a random decimal number between a and b
 function randomNumber(a, b) {
 	return Math.random()*(b-a)+a;
+}
+
+// set text to show up on canvas screen as caption
+function caption(text) {
+	$("#caption").html(text);
+}
+
+// set specified texture and bind
+function setTexture(texture) {
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.uniform1i(uniform_sampler, 0)
+}
+
+// bind to buffers with plane data
+function switchToPlaneBuffers() {
+    positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(planePoints), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(attribute_position, 3, gl.FLOAT, false, 0, 0);
+
+    normalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(planeNormals), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(attribute_normal, 3, gl.FLOAT, false, 0, 0);	
+
+    uvBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(planeUv), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);	
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+    gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);
+}
+
+// bind to buffers with cube data
+function switchToCubeBuffers() {
+	positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubePoints), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(attribute_position);
+    gl.vertexAttribPointer(attribute_position, 3, gl.FLOAT, false, 0, 0);
+
+    normalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeNormals), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(attribute_normal);
+    gl.vertexAttribPointer(attribute_normal, 3, gl.FLOAT, false, 0, 0);	
+
+    uvBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(cubeUv), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(attribute_UV);
+    gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+    gl.vertexAttribPointer(attribute_UV, 2, gl.FLOAT, false, 0, 0);
+}
+
+// bind to buffers with sphere data
+function switchToSphereBuffers() {
+    gl.bindBuffer(gl.ARRAY_BUFFER, planetPoints);
+    gl.vertexAttribPointer(attribute_position, planetPoints.itemSize, gl.FLOAT, false, 0, 0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, planetNormals);
+    gl.vertexAttribPointer(attribute_normal, planetNormals.itemSize, gl.FLOAT, false, 0, 0);
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, planetUv);
+    gl.vertexAttribPointer(attribute_UV, planetUv.itemSize, gl.FLOAT, false, 0, 0);
 }

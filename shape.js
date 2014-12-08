@@ -1,3 +1,5 @@
+
+// generate plane data
 function ground(vertices, points, normals, uv) {
 	normals.push(vec3(0, 1, 0));
 	normals.push(vec3(0, 1, 0));
@@ -21,7 +23,7 @@ function ground(vertices, points, normals, uv) {
     points.push(vertices[3]);
 }
 
-//given a 2D matrix of rows comprising vec2 of texture coordinates, transform each vec2 to be rotated by theta
+// given a 2D matrix of rows comprising vec2 of texture coordinates, transform each vec2 to be rotated by theta
 function rotateUV(matrix, theta) {
 
 	var rad = theta*Math.PI/180;
@@ -60,20 +62,24 @@ function translateUV(matrix, distanceX, distanceY) {
 	}
 }
 
+// convert degrees to radians
 function toRadians(theta) {
 	return theta*Math.PI/180;
 }
 
-function Cube(vertices, points, normals, uv){
-    Quad(vertices, points, normals, uv, 0, 1, 2, 3, vec3(0, 0, 1));
-    Quad(vertices, points, normals, uv, 4, 0, 6, 2, vec3(0, 1, 0));
-    Quad(vertices, points, normals, uv, 4, 5, 0, 1, vec3(1, 0, 0));
-    Quad(vertices, points, normals, uv, 2, 3, 6, 7, vec3(1, 0, 1));
-    Quad(vertices, points, normals, uv, 6, 7, 4, 5, vec3(0, 1, 1));
-    Quad(vertices, points, normals, uv, 1, 5, 3, 7, vec3(1, 1, 0 ));
+// generate cube data
+function cube(vertices, points, normals, uv){
+    quad(vertices, points, normals, uv, 0, 1, 2, 3, vec3(0, 0, 1));
+    quad(vertices, points, normals, uv, 4, 0, 6, 2, vec3(0, 1, 0));
+    quad(vertices, points, normals, uv, 4, 5, 0, 1, vec3(1, 0, 0));
+    quad(vertices, points, normals, uv, 2, 3, 6, 7, vec3(1, 0, 1));
+    quad(vertices, points, normals, uv, 6, 7, 4, 5, vec3(0, 1, 1));
+    quad(vertices, points, normals, uv, 1, 5, 3, 7, vec3(1, 1, 0 ));
 }
 
-function Quad(vertices, points, normals, uv, v1, v2, v3, v4, normal) {
+
+// cube helper function
+function quad(vertices, points, normals, uv, v1, v2, v3, v4, normal) {
 
     normals.push(normal);
     normals.push(normal);
@@ -97,7 +103,7 @@ function Quad(vertices, points, normals, uv, v1, v2, v3, v4, normal) {
     points.push(vertices[v2]);
 }
 
-// set up sphere data
+// generate sphere data
 // based on the Learning WebGL Tutorial (http://learningwebgl.com/blog/?p=1253)
 function setupSphere() {
     var latitudeBands = 30;

@@ -24,6 +24,18 @@
 	-ms-user-select: none; /* IE10+ */
 }
 
+.label2 { 
+	position:absolute; 
+	font-family: "Helvetica";
+	text-align: center;
+	width: 100%;
+	top: 250px;
+	color: #FFF;
+	-webkit-user-select: none; /* Chrome/Safari */        
+	-moz-user-select: none; /* Firefox */
+	-ms-user-select: none; /* IE10+ */
+}
+
 #hitbox {
 	position: absolute;
 	width: 1024px;

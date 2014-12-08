@@ -1,3 +1,5 @@
+
+// set up texture variables
 function initTextures() {
 
 	// Ground Texture
@@ -49,7 +51,6 @@ function initTextures() {
 		gl.bindTexture(gl.TEXTURE_2D, null);
 	}
 	debrisTexture.image.src = "./Images/asteroid.jpg";
-	//debrisTexture.image.src = "./Images/brick.jpg";
 	
 	// Heart Texture
 	heartTexture = gl.createTexture();
