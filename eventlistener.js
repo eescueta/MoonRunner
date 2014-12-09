@@ -40,7 +40,7 @@ function initEventListener() {
 
 	// if smart movement is on, use looped turn controls instead
 	if(SMART_MOVEMENT)
-		loopTurnControls();
+		loopedTurnControls();
 	
 	document.onkeydown = function(e) {
 		e = e || window.event;
