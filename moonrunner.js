@@ -116,7 +116,7 @@ function render() {
 	if(captionTimer<=0) {
 		setCaption("");
 	}
-	
+
 	// increment player speed on each frame
 	textureScrollSpeed+=0.0001;
 	
@@ -142,6 +142,11 @@ function render() {
     if (life > 0) {
     	score += 1;
     	invincibility++;
+    	turnInterval++;
+    	if (turnInterval > 15)
+    	{
+			$(".wheel").rotate({ animateTo:0});
+    	}
     }
     
     // if user is currently invincible, flash the canvas' border between two provided colors

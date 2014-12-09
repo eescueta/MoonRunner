@@ -8,6 +8,7 @@
 	left:0px;
 	width: 1024px;
 	height: 768px;
+	overflow: hidden;
 }
 
 .label { 
@@ -35,6 +36,15 @@
 	-moz-user-select: none; /* Firefox */
 	-ms-user-select: none; /* IE10+ */
 	z-index: 9999;
+}
+
+.wheel {
+	/*padding-top: 470px;
+	padding-left: 150px;*/
+	margin-top: 550px;
+	margin-left: 250px;
+	width: 50%;
+	height: 50%;
 }
 
 #hitbox {

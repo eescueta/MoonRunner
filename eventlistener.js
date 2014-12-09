@@ -19,6 +19,8 @@ function loopedTurnControls() {
 		if(textureDegree>-15) {
 			textureDegree-=0.25;
 			scrollX += 0.1;
+			$(".wheel").rotate({ animateTo:-20});
+			turnInterval = 0;
 		}
 	}
 	// right arrow
@@ -26,6 +28,8 @@ function loopedTurnControls() {
 		if(textureDegree<15) {
 			textureDegree+=0.25;
 			scrollX -= 0.1;
+			$(".wheel").rotate({ animateTo:-20});
+			turnInterval = 0;
 		}
 	}
 	setTimeout(loopedTurnControls, 10);
@@ -33,6 +37,7 @@ function loopedTurnControls() {
 
 function initEventListener() {
 	
+
 	// if smart movement is on, use looped turn controls instead
 	if(SMART_MOVEMENT)
 		loopTurnControls();
@@ -82,12 +87,16 @@ function initEventListener() {
 				if(textureDegree>-15) {
 					textureDegree-=0.25;
 					scrollX += 0.1;
+					$(".wheel").rotate({ animateTo:-20});
+					turnInterval = 0;
 				}
 			}
 			else if( e.keyCode===39) { // "right" (turn right)
 				if(textureDegree<15) {
 					textureDegree+=0.25;
 					scrollX -= 0.1;
+					$(".wheel").rotate({ animateTo:20});
+					turnInterval = 0;
 				}
 			}
 		}
@@ -104,14 +113,16 @@ function initEventListener() {
 		}
 		else if(RESET_READY && e.keyCode===82) { // "r" (reset the game)
 			// reset the game using loadWorld only if the player is on the game over screen
-			$( ".interface" ).html("");
+			// $( ".interface" ).html("");
+			$( ".interface" ).html("<img class='wheel' src='./Images/handle.png'>");
 			loadWorld();
 			RESET_READY = false;
 		}
 		else if(e.keyCode===80) { // "p" (start the game)
 			// start the game using init only if the player is on the game start screen
 			if (!gamestart) {
-				$( ".interface" ).html("");
+				// $( ".interface" ).html("");
+				$( ".interface" ).html("<img class='wheel' src='./Images/handle.png'>");
 				gamestart = true;
 				init();
 			}

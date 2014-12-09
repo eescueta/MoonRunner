@@ -43,6 +43,7 @@
 	var scrollX = 0;
 	var scrollY = 0;
 	var scrollZ = 0;
+	var turnInterval = 0;
 
 // BUFFER VARIABLES:
 	var positionBuffer;
