@@ -54,3 +54,8 @@
 	height: 768px;
 	background-color: #ff0000;
 }
+
+#info {
+    margin-left: auto;
+    margin-right: auto;
+}
