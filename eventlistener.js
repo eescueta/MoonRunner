@@ -114,7 +114,6 @@ function initEventListener() {
 		else if(RESET_READY && e.keyCode===82) { // "r" (reset the game)
 			// reset the game using loadWorld only if the player is on the game over screen
 			// $( ".interface" ).html("");
-			$( ".interface" ).html("<img class='wheel' src='./Images/handle.png'>");
 			loadWorld();
 			RESET_READY = false;
 		}
@@ -122,7 +121,6 @@ function initEventListener() {
 			// start the game using init only if the player is on the game start screen
 			if (!gamestart) {
 				// $( ".interface" ).html("");
-				$( ".interface" ).html("<img class='wheel' src='./Images/handle.png'>");
 				gamestart = true;
 				init();
 			}
