@@ -1,0 +1,132 @@
+<html>
+<link rel="stylesheet" type="text/css" href="style.css" />
+
+<script type="text/javascript" src="./Common/webgl-utils.js"></script>
+<script type="text/javascript" src="./Common/initShaders.js"></script>
+<script type="text/javascript" src="./Common/math.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type="text/javascript" src="http://jqueryrotate.googlecode.com/svn/trunk/jQueryRotate.js"></script>
+<script type="text/javascript" src="global.js"></script>
+<script type="text/javascript" src="shape.js"></script>
+<script type="text/javascript" src="texture.js"></script>
+<script type="text/javascript" src="eventlistener.js"></script>
+<script type="text/javascript" src="moonrunner.js"></script>
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+
+// sphere data vectors
+attribute vec3 vPosition;
+attribute vec3 vNormal;
+
+// texture coordinates
+attribute vec2 vTextureCoordinates;
+varying vec2 fTextureCoordinates;
+
+// transformation matrices
+uniform mat4 mvMatrix;
+uniform mat4 pMatrix;
+uniform mat4 mvLightMatrix;
+
+// normals and lights
+uniform vec3 lightPosition;
+varying vec3 N, L, E, H;
+varying vec4 fColor;
+
+void main() {
+	
+	// light position in camera space
+    vec3 pos = (mvMatrix * vec4(vPosition, 1.0)).xyz;
+	
+	vec3 light = lightPosition; //vec3 light = (mvLightMatrix * vec4(lightPosition, 1.0)).xyz;
+	
+    L = normalize(light - pos); 
+    E = normalize(-pos);	
+	H = normalize(L + E);
+    N = normalize(mvMatrix * vec4(vNormal, 0.0)).xyz;
+	
+	fTextureCoordinates = vTextureCoordinates;
+	gl_Position = pMatrix * vec4(pos, 1.0);
+
+} 
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+
+precision mediump float;
+
+varying vec2 fTextureCoordinates;
+uniform sampler2D uSampler; //texture map
+
+// normals and lights
+uniform float shininess;
+varying vec3 N, L, E, H;
+
+void main() {
+
+	vec4 texColor = texture2D(uSampler, fTextureCoordinates); 
+	
+	vec4 ambient = 0.4 * texColor; //vec4 ambient = ambientProduct2;
+	
+	float kd = max(dot(L, N), 0.0);
+	vec4 diffuse = kd * 0.7 * texColor; //vec4 diffuse = kd * diffuseProduct2;
+	
+	float ks = pow(max(dot(N, H), 0.0), shininess);
+	vec4 specular = 0.3 * ks * vec4(1.0, 1.0, 1.0, 1.0); //vec4 specular = ks * specularProduct2;
+	
+	vec4 fColor = ambient + diffuse + specular;
+	fColor.a  = 1.0;
+	
+	// gl_FragColor = fColor; // use this for texture mapping and light/shading
+	gl_FragColor = texColor; // use this for simple texture mapping
+
+}
+</script>
+
+<body>
+
+<div id="canvas-wrap" style="width:1024px; margin:0 auto; border-style: solid; border-width: 10px; border-color: black;" >
+	
+	<canvas id="gl-canvas" width="1024" height="768">
+	Oops ... your browser doesn't support the HTML5 canvas element
+	
+	</canvas>
+	
+	<h3 class="label">Score: <span id="score">0</span></h3>
+	
+	<h2 class="label2"><span id="caption"></span></h2>
+	
+	<div class="interface">
+	</div>
+	
+</div>
+
+	 <!-- <div id="hitbox">test</div> -->
+	<br />
+
+<!--
+<div id="game-text" style="width:1024px; margin:0 auto;">
+	Instructions: 
+	<ul>
+		You're a garbage-collecting rover on the moon.
+		The moon is home to countless debris which can damage (and eventually destroy) your craft if you collide into them.
+		<br />
+		Unfortunately, both your brakes and accelerator have malfunctioned. Under these circumstances, your task, should you choose to accept it,
+		is to collect as many American flags littered on the moon's surface as possible. Good luck!
+	</ul>
+	Controls:   
+	<ul>
+		<li>Left Arrow: turn left</li>
+		<li>Right Arrow: turn right</li>
+	</ul>
+	Objects
+	<ul>
+		<li>Debris: dodge these - hitting debris will take away a life!</li>
+		<li>Health Pack: grab it to replenish a life (you can hold a max of 3)!</li>
+		<li>American Flag: grab it to rack up more points!</li>
+		<li>"Slow" Sign: run through this to slow down! </li>
+	</ul>
+</div>
+-->
+
+</body>
+</html>
