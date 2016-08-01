@@ -12,7 +12,8 @@ function initTextures() {
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // parameters for scaling down
 		gl.bindTexture(gl.TEXTURE_2D, null);
 	}
-	groundTexture.image.src = "./Images/moonsurface_4096.png";
+	// groundTexture.image.src = "./Images/moonsurface_4096.png";
+	groundTexture.image.src = moonImage.src;
 	
 	// Space Texture
 	spaceTexture = gl.createTexture();
@@ -24,7 +25,8 @@ function initTextures() {
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // parameters for scaling down
 		gl.bindTexture(gl.TEXTURE_2D, null);
 	}
-	spaceTexture.image.src = "./Images/space.gif";
+	// spaceTexture.image.src = "./Images/space.gif";
+	spaceTexture.image.src = space.src;
 	
 	// Planet Texture
 	planetTexture = gl.createTexture();
@@ -38,7 +40,8 @@ function initTextures() {
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); // prevent wrapped t coordinates
 		gl.bindTexture(gl.TEXTURE_2D, null);
 	}
-	planetTexture.image.src = "./Images/planet.png";
+	// planetTexture.image.src = "./Images/planet.png";
+	planetTexture.image.src = planetImage.src;
 	
 	// Debris Texture
 	debrisTexture = gl.createTexture();
@@ -50,7 +53,8 @@ function initTextures() {
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // parameters for scaling down
 		gl.bindTexture(gl.TEXTURE_2D, null);
 	}
-	debrisTexture.image.src = "./Images/asteroid.jpg";
+	// debrisTexture.image.src = "./Images/asteroid.jpg";
+	debrisTexture.image.src = asteroidImage.src;
 	
 	// Heart Texture
 	heartTexture = gl.createTexture();
@@ -64,7 +68,8 @@ function initTextures() {
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); // prevent wrapped t coordinates
 		gl.bindTexture(gl.TEXTURE_2D, null);
 	}
-	heartTexture.image.src = "./Images/heart.jpg";
+	// heartTexture.image.src = "./Images/heart.jpg";
+	heartTexture.image.src = heartImage.src;
 
 	// Health Texture
 	healthTexture = gl.createTexture();
@@ -78,7 +83,8 @@ function initTextures() {
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); // prevent wrapped t coordinates
 		gl.bindTexture(gl.TEXTURE_2D, null);
 	}
-	healthTexture.image.src = "./Images/health.png";
+	// healthTexture.image.src = "./Images/health.png";
+	healthTexture.image.src = healthImage.src;
 	
 	// Flag Texture
 	flagTexture = gl.createTexture();
@@ -92,7 +98,8 @@ function initTextures() {
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); // prevent wrapped t coordinates
 		gl.bindTexture(gl.TEXTURE_2D, null);
 	}
-	flagTexture.image.src = "./Images/flag_inverse.png";
+	// flagTexture.image.src = "./Images/flag_inverse.png";
+	flagTexture.image.src = flagImage.src;
 	
 	// Slow Texture
 	slowTexture = gl.createTexture();
@@ -106,5 +113,6 @@ function initTextures() {
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); // prevent wrapped t coordinates
 		gl.bindTexture(gl.TEXTURE_2D, null);
 	}
-	slowTexture.image.src = "./Images/slow_inverse.png";
+	// slowTexture.image.src = "./Images/slow_inverse.png";
+	slowTexture.image.src = slowImage.src;
 }

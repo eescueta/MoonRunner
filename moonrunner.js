@@ -101,9 +101,6 @@ function loadWorld() {
 	
     // reset slow positions
 	setObjectPositions(slow_positionX, slow_positionZ, NUM_SLOW);
-	
-    // hud wheel
-    	$( ".interface" ).html("<img class='wheel' src='./Images/handle.png'>");
 
 	// reset timer and enable depth buffer before rendering
     timer.reset();
